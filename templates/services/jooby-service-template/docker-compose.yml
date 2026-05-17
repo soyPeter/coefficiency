@@ -1,0 +1,87 @@
+version: "3.8"
+
+services:
+  __SERVICE__-db:
+    image: postgres:16-alpine
+    container_name: __SERVICE__-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: __SERVICE__db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - __SERVICE__-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
+    labels:
+      logging: promtail
+    networks:
+      - __SERVICE__-default
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+  __SERVICE__-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: __SERVICE__-service
+    restart: unless-stopped
+    depends_on:
+      __SERVICE__-db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://__SERVICE__-db:5432/__SERVICE__db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      FLYWAY_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
+    labels:
+      prometheus.scrape: "true"
+      prometheus.port: "8080"
+      logging: promtail
+    networks:
+      - __SERVICE__-default
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+networks:
+  __SERVICE__-default:
+
+volumes:
+  __SERVICE__-db-data:

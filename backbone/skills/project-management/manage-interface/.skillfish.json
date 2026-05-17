@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "manage-interface",
+  "owner": "cuioss",
+  "repo": "plan-marshall",
+  "path": "marketplace/bundles/pm-documents/skills/manage-interface",
+  "branch": "main",
+  "sha": "213084d5b866d5f41ee5f1dc8d8b01aaeb1028f9",
+  "source": "manual"
+}

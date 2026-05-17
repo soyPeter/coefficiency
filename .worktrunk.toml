@@ -1,0 +1,35 @@
+# Worktrunk configuration for Agentic Backbone projects
+# https://worktrunk.dev/
+#
+# This file enables parallel agent workflows using git worktrees.
+# Each worktree gets its own dev portal port and auto-setup hooks.
+
+[template]
+# Worktree path template: project-name-branch-name
+path = "coefficiency-{{branch | slugify}}"
+
+[hooks]
+# Run after creating a new worktree
+post-create = [
+  "echo '🚀 Setting up worktree for coefficiency...'",
+  "cd {{worktree_path}} && bash scripts/setup-worktree.sh"
+]
+
+# Run after merging a worktree
+post-merge = [
+  "echo '🧹 Cleaning up after merge...'"
+]
+
+[hooks.merge]
+# Pre-merge checks
+pre-merge = [
+  "cd {{worktree_path}} && bash scripts/verify-hook-parity.sh || true",
+  "cd {{worktree_path}} && bash scripts/verify-template-sync.sh || true"
+]
+
+[aliases]
+# Quick alias to launch Claude Code in a new worktree
+claude = "switch -x claude -c"
+
+# Merge feature back to dev and clean up
+merge = "run bash scripts/merge-feature.sh"

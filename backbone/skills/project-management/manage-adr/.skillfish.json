@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "manage-adr",
+  "owner": "cuioss",
+  "repo": "plan-marshall",
+  "path": "marketplace/bundles/pm-documents/skills/manage-adr",
+  "branch": "main",
+  "sha": "4adc63f15c2479f8f41cccc6578e782df7866bf0",
+  "source": "manual"
+}

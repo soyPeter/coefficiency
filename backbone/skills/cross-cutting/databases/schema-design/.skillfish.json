@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "postgres-schema-design",
+  "owner": "francanete",
+  "repo": "fran-marketplace",
+  "path": "database-expert/skills/postgres-schema-design",
+  "branch": "main",
+  "sha": "24cd0af7b8597377775de2117a336f7bf7355050",
+  "source": "manual"
+}

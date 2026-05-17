@@ -1,0 +1,43 @@
+#!/bin/bash
+# Git pre-commit hook: Backbone version enforcement
+# Warns if backbone/ or backbone/templates/ files changed but VERSION not updated
+# Non-blocking — warns but allows commit (use VERSION_GATE=1 to block)
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT"
+
+STAGED_FILES=$(git diff --name-only --cached 2>/dev/null || true)
+[ -z "$STAGED_FILES" ] && exit 0
+
+# Check if any backbone files changed
+BACKBONE_CHANGED=$(echo "$STAGED_FILES" | grep -E '^backbone/|^templates/' || true)
+[ -z "$BACKBONE_CHANGED" ] && exit 0
+
+# Check if VERSION file is staged
+VERSION_STAGED=$(echo "$STAGED_FILES" | grep -E '^backbone/VERSION$|^templates/backbone/VERSION$' || true)
+
+if [ -z "$VERSION_STAGED" ]; then
+    echo ""
+    echo "⚠️  WARNING: backbone files changed but VERSION not staged!"
+    echo ""
+    echo "   Changed backbone files:"
+    echo "$BACKBONE_CHANGED" | sed 's/^/     - /'
+    echo ""
+    echo "   According to Definition of Done, you MUST update:"
+    echo "     - backbone/VERSION"
+    echo "     - All <!-- VERSION: --> headers in skeleton files"
+    echo ""
+    echo "   Version format: YYYY.MM.DD (CalVer)"
+    echo "   Example: 2026.04.13"
+    echo ""
+
+    if [ "${VERSION_GATE:-0}" = "1" ]; then
+        echo "❌ VERSION_GATE=1 - blocking commit"
+        exit 1
+    fi
+
+    echo "⚠️  Commit allowed (VERSION_GATE not set to 1)"
+    echo "   To block: VERSION_GATE=1 git commit ..."
+fi
+
+exit 0

@@ -1,0 +1,53 @@
+plugins {
+    id("java")
+    id("application")
+}
+
+group = "__PACKAGE__"
+version = "1.0.0-SNAPSHOT"
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+application {
+    mainClass = "__PACKAGE__.__SERVICE__.__SERVICE_PASCAL__Application"
+}
+
+dependencies {
+    // Annotation processors (order matters: avaje-inject-generator → jooby-apt)
+    annotationProcessor(libs.avaje.inject.generator)
+    annotationProcessor(libs.jooby.apt)
+
+    implementation(platform(libs.avaje.inject))
+
+    implementation(libs.bundles.jooby.core)
+    implementation(libs.bundles.postgres.flyway.jdbi)
+    implementation(libs.bundles.jackson)
+
+    testImplementation(libs.bundles.testing)
+}
+
+sourceSets {
+    create("intTest") {
+        compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+        runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+    }
+}
+
+configurations["intTestImplementation"].extendsFrom(configurations.testImplementation.get())
+configurations["intTestRuntimeOnly"].extendsFrom(configurations.testRuntimeOnly.get())
+
+tasks.register<Test>("intTest") {
+    description = "Runs integration tests."
+    group = "verification"
+    testClassesDirs = sourceSets["intTest"].output.classesDirs
+    classpath = sourceSets["intTest"].runtimeClasspath
+    shouldRunAfter("test")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}

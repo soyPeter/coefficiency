@@ -1,0 +1,52 @@
+%%{init: {'theme': 'default'}}%%
+flowchart TB
+    subgraph client[Client Request]
+        REQ[HTTP Request]
+    end
+
+    subgraph controller[REST Controller]
+        CC[CommandController]
+        QC[QueryController]
+    end
+
+    subgraph usecase[Application Layer]
+        CUC[Command Use Case]
+        QUC[Query Use Case]
+    end
+
+    subgraph repos[Repository Layer]
+        CR[CommandRepo]
+        QR[QueryRepo]
+    end
+
+    subgraph jdbi[JDBI Instances]
+        JC[jdbiCommand]
+        JQ[jdbiQuery]
+    end
+
+    subgraph databases[Databases]
+        PDB[(Primary Database<br/>Read/Write)]
+        RDB[(Replica Database<br/>Read-Only)]
+    end
+
+    REQ -->|POST, PUT, DELETE| CC
+    REQ -->|GET| QC
+
+    CC --> CUC
+    QC --> QUC
+
+    CUC --> CR
+    QUC --> QR
+
+    CR --> JC
+    QR --> JQ
+
+    JC --> PDB
+    JQ --> RDB
+
+    PDB -.->|Replication| RDB
+
+    style PDB fill:#e1f5fe,stroke:#01579b
+    style RDB fill:#f3e5f5,stroke:#4a148c
+    style JC fill:#e8f5e9,stroke:#1b5e20
+    style JQ fill:#fff3e0,stroke:#e65100

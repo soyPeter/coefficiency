@@ -1,0 +1,31 @@
+%%{init: {'theme': 'default'}}%%
+flowchart TB
+    subgraph transaction[Same Database Transaction]
+        UC[Use Case<br/>@PublishEvents]
+        DER[DomainEventRecorder.record]
+        BR[Business Repository]
+        OT[(Outbox Table)]
+        BD[(Business Data)]
+    end
+
+    subgraph async[Asynchronous Processing]
+        OS[OutboxService<br/>@Scheduled]
+        RM[RabbitMQ]
+        CON[Consumer Service]
+    end
+
+    UC -->|1. Execute business logic| BR
+    BR -->|2. Save data| BD
+    UC -->|3. Record event| DER
+    DER -->|4. Save event<br/>same transaction| OT
+
+    OS -->|5. Poll unpublished<br/>events| OT
+    OS -->|6. Publish to<br/>message broker| RM
+    OS -->|7. Mark as published| OT
+    RM -->|8. Deliver to| CON
+
+    style transaction fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style async fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    style OT fill:#bbdefb,stroke:#1565c0
+    style BD fill:#c8e6c9,stroke:#2e7d32
+    style RM fill:#ffccbc,stroke:#bf360c

@@ -1,0 +1,64 @@
+plugins {
+    java
+    id("checkstyle")
+    id("com.github.spotbugs") version "6.0.0" apply false
+    id("org.owasp.dependencycheck") version "9.0.7"
+}
+
+group = "__PACKAGE__"
+version = "0.0.1-SNAPSHOT"
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+subprojects {
+    apply(plugin = "java")
+    apply(plugin = "checkstyle")
+    apply(plugin = "com.github.spotbugs")
+
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+    }
+
+    configure<CheckstyleExtension> {
+        toolVersion = "12.1.0"
+        configFile = rootProject.file("build-tools/checkstyle.xml")
+        isIgnoreFailures = false
+        maxWarnings = 500
+        maxErrors = 5
+    }
+
+    configure<com.github.spotbugs.snom.SpotBugsExtension> {
+        toolVersion = "4.9.8"
+        excludeFilter = rootProject.file("build-tools/spotbugs-exclude.xml")
+        effort = com.github.spotbugs.snom.Effort.MAX
+        reportLevel = com.github.spotbugs.snom.Confidence.MEDIUM
+    }
+
+    tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
+        reports {
+            create("html") { required.set(true) }
+            create("xml") { required.set(false) }
+        }
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
+        testLogging {
+            events("PASSED", "FAILED", "SKIPPED")
+        }
+    }
+}
+
+dependencyCheck {
+    failBuildOnCVSS = 7.0f
+    formats = listOf("HTML", "JSON")
+    suppressionFile = "build-tools/dependency-check-suppressions.xml"
+    scanConfigurations = listOf("runtimeClasspath")
+    nvd.apiKey = System.getenv("NVD_API_KEY") ?: ""
+}

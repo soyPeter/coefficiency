@@ -1,0 +1,32 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, master, dev, develop]
+  pull_request:
+    branches: [main, master, dev, develop]
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for staged scan
+      
+      - name: Run secret scan
+        run: bash scripts/secret-scan.sh --all
+        continue-on-error: true
+        id: secret_scan
+      
+      - name: Run base64 scan
+        run: bash scripts/base64-scan.sh --all
+        continue-on-error: true
+        id: base64_scan
+      
+      - name: Report findings
+        if: steps.secret_scan.outcome == 'failure' || steps.base64_scan.outcome == 'failure'
+        run: |
+          echo "::error::Security scan detected potential secrets or suspicious base64"
+          echo "Review the scan output above and fix any real secrets before merging."
+          exit 1

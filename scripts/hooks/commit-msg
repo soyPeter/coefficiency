@@ -1,0 +1,83 @@
+#!/bin/bash
+# commit-msg hook: Validates Conventional Commits format
+# Installed via: scripts/setup-hooks.sh
+# Format: <type>(<scope>): <description>
+# Types: feat, fix, refactor, docs, test, chore, perf, ci, build
+
+COMMIT_MSG_FILE="$1"
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+# Skip merge commits and fixup commits
+if echo "$COMMIT_MSG" | grep -qE "^(Merge|Revert|fixup!|squash!)"; then
+  exit 0
+fi
+
+# Skip WIP commits (allow quick saves)
+if echo "$COMMIT_MSG" | grep -qiE "^wip:"; then
+  echo -e "${YELLOW}⚠️  WIP commit allowed — remember to squash before merging${NC}"
+  exit 0
+fi
+
+# Conventional commits pattern
+# type(scope): description  — scope is optional
+PATTERN="^(feat|fix|refactor|docs|test|chore|perf|ci|build)(\([a-z0-9_-]+\))?: .{1,100}$"
+
+# Check first line only (subject line)
+SUBJECT=$(echo "$COMMIT_MSG" | head -n1)
+
+if echo "$SUBJECT" | grep -qE "$PATTERN"; then
+  # ── Scope-to-files validation (warning only) ────────────────────────────────
+  # If the commit has a scope, check that at least some staged Java files live
+  # under a directory matching that scope. Catches cases like
+  # "feat(gateway): ..." when only customer/ files were changed.
+  SCOPE=$(echo "$SUBJECT" | grep -oE '\([a-z0-9_-]+\)' | tr -d '()')
+  if [ -n "$SCOPE" ]; then
+    # These scopes are inherently cross-module or non-module — skip the check
+    CROSS_MODULE_SCOPES="shared|backbone|build|ci|docs|infra|security|test"
+    if ! echo "$SCOPE" | grep -qE "^(${CROSS_MODULE_SCOPES})$"; then
+      STAGED_JAVA=$(git diff --cached --name-only 2>/dev/null | grep '\.java$' || true)
+      if [ -n "$STAGED_JAVA" ]; then
+        SCOPE_FILES=$(echo "$STAGED_JAVA" | grep -c "^${SCOPE}/" || true)
+        TOTAL_JAVA=$(echo "$STAGED_JAVA" | wc -l | tr -d ' ')
+        if [ "${SCOPE_FILES:-0}" -eq 0 ]; then
+          echo ""
+          echo -e "${YELLOW}⚠️  SCOPE MISMATCH: scope '${SCOPE}' but no staged Java files in ${SCOPE}/${NC}"
+          echo "   Staged Java files (first 5):"
+          echo "$STAGED_JAVA" | head -5 | while IFS= read -r f; do echo "     $f"; done
+          [ "$TOTAL_JAVA" -gt 5 ] && echo "     ... and $((TOTAL_JAVA - 5)) more"
+          echo ""
+          echo "   If this is a cross-module change, consider a broader scope or none."
+          echo "   This is a warning — commit proceeds."
+          echo ""
+        fi
+      fi
+    fi
+  fi
+  exit 0
+fi
+
+echo ""
+echo -e "${RED}❌ Commit message format invalid${NC}"
+echo ""
+echo "  Got:      $SUBJECT"
+echo ""
+echo "  Required: <type>(<scope>): <description>"
+echo ""
+echo "  Valid types: feat  fix  refactor  docs  test  chore  perf  ci  build"
+echo ""
+echo "  Examples:"
+echo "    feat(gateway): add per-route rate limiting"
+echo "    fix(signup): replace Spring PasswordEncoder with CDI bean"
+echo "    refactor(customer): extract JDBI row mapper to separate class"
+echo "    test(referral): add Testcontainers integration for state machine"
+echo "    docs(backbone): update 3-TASKS.md with M3 progress"
+echo "    chore(build): upgrade Quarkus to 3.20.1"
+echo ""
+echo "  Scope is optional: 'feat: add new endpoint' is also valid."
+echo "  See backbone/HOOKS-SETUP.md for full conventions."
+echo ""
+exit 1

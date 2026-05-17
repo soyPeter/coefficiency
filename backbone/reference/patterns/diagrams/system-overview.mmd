@@ -1,0 +1,33 @@
+flowchart TB
+    subgraph gateway[API Gateway]
+        B2F[B2F-Proxy<br/>:8020]
+    end
+
+    subgraph services[Microservices]
+        CS[Customer Service<br/>:8080]
+        SS[Signup Service<br/>:8081]
+        RS[Referral Service<br/>:8082]
+    end
+
+    subgraph infrastructure[Infrastructure]
+        PG[(PostgreSQL<br/>:5432)]
+        RMQ[RabbitMQ<br/>:5672]
+        KC[Keycloak<br/>:8081]
+        Redis[(Redis<br/>:6379)]
+    end
+
+    B2F --> CS
+    B2F --> SS
+    B2F --> RS
+    
+    CS --> PG
+    SS --> PG
+    RS --> PG
+    
+    CS --> RMQ
+    SS --> RMQ
+    RS --> RMQ
+    
+    SS -.-> KC
+    B2F -.-> KC
+    B2F --> Redis

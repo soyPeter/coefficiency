@@ -1,0 +1,10 @@
+.DS_Store
+.gradle/
+build/
+data/
+logs/
+*.hprof
+node_modules/
+dist/
+.env
+.venv/

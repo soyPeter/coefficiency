@@ -1,0 +1,44 @@
+# Java/Gradle
+.gradle/
+build/
+bin/
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.code-workspace
+.project
+.classpath
+.settings/
+
+# Environment & Secrets
+.env
+.env.local
+*.pem
+*.key
+secrets/
+credentials/
+
+# Test reports
+/test-results/
+/reports/
+*.test.log
+
+# Docker
+*.dockerignore

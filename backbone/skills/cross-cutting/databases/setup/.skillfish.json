@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "postgres-setup",
+  "owner": "jmazzahacks",
+  "repo": "byteforge-claude-skills",
+  "path": "skills/postgres-setup",
+  "branch": "main",
+  "sha": "27cd4d6965ad4aa9bb97598a2bcb6fc8b1d8078e",
+  "source": "manual"
+}

@@ -1,0 +1,82 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: jooby-service-template
+  title: Jooby Microservice
+  description: Generate a production-ready Jooby 4.x microservice with hexagonal architecture and Avaje Inject DI
+  tags:
+    - jooby
+    - java
+    - gradle
+    - microservices
+    - hexagonal-architecture
+    - avaje-inject
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Service Information
+      required:
+        - serviceName
+        - package
+        - entity
+      properties:
+        serviceName:
+          title: Service Name
+          type: string
+          description: kebab-case service identifier (e.g., customer, user-management)
+          default: my-service
+          examples:
+            - customer
+            - user-management
+            - billing
+        package:
+          title: Base Package
+          type: string
+          description: Java package namespace
+          default: io.bitnomio
+          examples:
+            - io.company
+            - com.organization
+        entity:
+          title: Primary Entity
+          type: string
+          description: PascalCase domain entity name
+          default: User
+          examples:
+            - User
+            - Order
+            - Product
+        tableName:
+          title: Database Table Name
+          type: string
+          description: Singular snake_case table name
+          default: users
+          examples:
+            - users
+            - order_items
+            - products
+
+    - title: Infrastructure
+      properties:
+        enableKafka:
+          title: Enable Kafka
+          type: boolean
+          description: Add Kafka messaging support
+          default: false
+        enableRabbitMQ:
+          title: Enable RabbitMQ
+          type: boolean
+          description: Add RabbitMQ messaging support
+          default: false
+        enablePostgres:
+          title: Enable PostgreSQL
+          type: boolean
+          description: Add PostgreSQL persistence
+          default: true
+        enableRedis:
+          title: Enable Redis
+          type: boolean
+          description: Add Redis caching
+          default: false

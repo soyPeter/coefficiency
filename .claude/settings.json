@@ -1,0 +1,263 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "LS",
+      "Edit",
+      "MultiEdit",
+      "Write(src/**)",
+      "Write(tests/**)",
+      "Write(scripts/**)",
+      "Write(backbone/**)",
+      "Write(dev-portal/**)",
+      "Write(templates/**)",
+      "Bash(__BUILD_TOOL__ *)",
+      "Bash(podman-compose *)",
+      "Bash(podman *)",
+      "Bash(psql *)",
+      "Bash(flyway *)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git branch *)",
+      "Bash(git stash *)",
+      "Bash(./gradlew *)",
+      "Bash(npm *)",
+      "Bash(node *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(touch *)",
+      "Bash(cat *)",
+      "Bash(find *)",
+      "Bash(.claude/hooks/*)"
+    ],
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/.dev.vars*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials/**)",
+      "Read(**/.aws/**)",
+      "Read(**/.ssh/**)",
+      "Read(**/config/database.yml)",
+      "Read(**/config/credentials.json)",
+      "Read(**/.npmrc)",
+      "Read(**/.pypirc)",
+      "Write(**/.env*)",
+      "Write(**/secrets/**)",
+      "Write(**/.ssh/**)",
+      "Write(.github/workflows/*)",
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(git push *)",
+      "Bash(git merge *)",
+      "Bash(git rebase *)",
+      "Bash(npm publish *)",
+      "Bash(curl * | sh)",
+      "Bash(wget *)",
+      "Bash(chmod *)",
+      "Bash(chown *)"
+    ]
+  },
+  "agents": {
+    "default": "backbone-developer"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-bash-safety-check.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-subagent-conflict-check.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking subagent conflicts..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-wip-check.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking WIP policy..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/review-gate-check.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking review gates..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-rd-gate.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking PRD→Design gate..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-grill-check.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking grill evidence..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/check-conventions.sh\"",
+            "timeout": 10,
+            "statusMessage": "🔍 Checking __FRAMEWORK__ conventions..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-skill-check.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking layer conventions..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-task-completion-check.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking task completion criteria..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-task-granularity-check.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking task granularity..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/pre-tool-use-memory-check.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking MEMORY documentation..."
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/session-start-workflow-check.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/session-start-drift-check.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/session-start-skills.sh\"",
+            "statusMessage": "Loading required skills..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/stop-wip-check.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/check-dod.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/post-commit-dod-reminder.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/post-edit-layer-check.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/post-tool-use-uuid-warning.sh\"",
+            "timeout": 5,
+            "statusMessage": "Checking UUID vs TSID usage..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/discovery-tracker.sh\"",
+            "statusMessage": "Tracking discoveries..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/post-write-scaffold-check.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Write.*backbone/decisions|Write.*backbone/prd|Write.*backbone/tasks|Write.*5-DECISIONS|Write.*1-PRD|Write.*3-TASKS",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/post-doc-check.sh\"",
+            "timeout": 10,
+            "statusMessage": "Checking documentation sync..."
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7"]
+    }
+  }
+}

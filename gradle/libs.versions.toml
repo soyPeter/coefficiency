@@ -1,0 +1,134 @@
+[versions]
+jooby = "4.5.1"
+avaje-inject = "12.5"
+jdbi = "3.53.0"
+flyway = "11.6.0"
+postgresql = "42.7.5"
+sqlite = "3.49.1.0"
+junit = "5.12.2"
+mockito = "5.17.0"
+testcontainers = "1.20.6"
+jackson = "2.18.3"
+logback = "1.5.18"
+logstash = "9.0"
+assertj = "3.27.6"
+shadow = "9.4.1"
+
+[libraries]
+# Jooby core
+jooby-core = { module = "io.jooby:jooby", version.ref = "jooby" }
+jooby-netty = { module = "io.jooby:jooby-netty", version.ref = "jooby" }
+jooby-apt = { module = "io.jooby:jooby-apt", version.ref = "jooby" }
+jooby-avaje-inject = { module = "io.jooby:jooby-avaje-inject", version.ref = "jooby" }
+jooby-jackson = { module = "io.jooby:jooby-jackson", version.ref = "jooby" }
+jooby-jdbi = { module = "io.jooby:jooby-jdbi", version.ref = "jooby" }
+jooby-flyway = { module = "io.jooby:jooby-flyway", version.ref = "jooby" }
+
+# Avaje Inject
+avaje-inject = { module = "io.avaje:avaje-inject", version.ref = "avaje-inject" }
+avaje-inject-generator = { module = "io.avaje:avaje-inject-generator", version.ref = "avaje-inject" }
+avaje-inject-aop = { module = "io.avaje:avaje-inject-aop", version.ref = "avaje-inject" }
+
+# JDBI + PostgreSQL + Flyway
+jdbi-core = { module = "org.jdbi:jdbi3-core", version.ref = "jdbi" }
+jdbi-sqlobject = { module = "org.jdbi:jdbi3-sqlobject", version.ref = "jdbi" }
+jdbi-postgres = { module = "org.jdbi:jdbi3-postgres", version.ref = "jdbi" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+
+# Jackson
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+
+# SQLite
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite" }
+
+# Logging
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash" }
+
+# Jooby OpenAPI
+jooby-openapi = { module = "io.jooby:jooby-openapi", version.ref = "jooby" }
+jooby-swagger-ui = { module = "io.jooby:jooby-swagger-ui", version.ref = "jooby" }
+jooby-redoc = { module = "io.jooby:jooby-redoc", version.ref = "jooby" }
+
+# Testing
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+
+[bundles]
+jooby-core = [
+  "jooby-core",
+  "jooby-netty",
+  "jooby-apt",
+  "jooby-avaje-inject",
+  "jooby-jackson",
+  "logback-classic"
+]
+
+jooby-avaje-core = [
+  "jooby-core",
+  "jooby-netty",
+  "jooby-apt",
+  "jooby-jackson",
+  "logback-classic"
+]
+postgres-flyway-jdbi = [
+  "jooby-jdbi",
+  "jooby-flyway",
+  "jdbi-core",
+  "jdbi-sqlobject",
+  "jdbi-postgres",
+  "flyway-core",
+  "flyway-postgres",
+  "postgresql"
+]
+testing = [
+  "junit-jupiter",
+  "mockito-core",
+  "mockito-junit-jupiter",
+  "assertj-core",
+  "testcontainers-postgresql",
+  "testcontainers-junit-jupiter"
+]
+jackson = [
+  "jackson-databind",
+  "jackson-datatype-jsr310"
+]
+
+coeff-core = [
+  "jooby-core",
+  "jooby-netty",
+  "jooby-apt",
+  "jooby-avaje-inject",
+  "jooby-jackson",
+  "jooby-jdbi",
+  "jdbi-core",
+  "jdbi-sqlobject",
+  "sqlite-jdbc",
+  "logback-classic",
+  "logstash-logback-encoder"
+]
+
+coeff-openapi = [
+  "jooby-openapi",
+  "jooby-swagger-ui",
+  "jooby-redoc"
+]
+
+coeff-testing = [
+  "junit-jupiter",
+  "mockito-core",
+  "mockito-junit-jupiter",
+  "assertj-core"
+]
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+jooby-run = { id = "io.jooby.run", version = "3.4.1" }
+

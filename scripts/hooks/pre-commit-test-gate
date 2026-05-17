@@ -1,0 +1,50 @@
+#!/bin/bash
+# Git pre-commit hook: Test coverage gate
+# Warns if Java source files changed but no corresponding test files
+# Non-blocking — warns but allows commit (use TEST_GATE=1 to block)
+
+set -e
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT"
+
+# Get staged files
+STAGED_FILES=$(git diff --name-only --cached 2>/dev/null || true)
+[ -z "$STAGED_FILES" ] && exit 0
+
+# Find Java source files changed (domain, app, infra layers)
+JAVA_SOURCES=$(echo "$STAGED_FILES" | grep -E '\.java$' | grep -v '/test/' | grep -v 'Test\.java$' || true)
+JAVA_TESTS=$(echo "$STAGED_FILES" | grep -E '\.java$' | grep -E '/test/' || true)
+
+# If no Java sources changed, skip
+[ -z "$JAVA_SOURCES" ] && exit 0
+
+# If tests exist alongside sources, all good
+if [ -n "$JAVA_TESTS" ]; then
+    exit 0
+fi
+
+# Count sources
+SOURCE_COUNT=$(echo "$JAVA_SOURCES" | wc -l | tr -d ' ')
+
+echo ""
+echo "⚠️  TEST COVERAGE GATE: $SOURCE_COUNT Java source file(s) changed with no test files"
+echo ""
+echo "  Changed sources:"
+echo "$JAVA_SOURCES" | head -5 | while read -r f; do echo "    ↳ $f"; done
+[ "$SOURCE_COUNT" -gt 5 ] && echo "    ... and $((SOURCE_COUNT - 5)) more"
+echo ""
+echo "  Recommendation: Add test files for new functionality"
+echo "  Expected: Tests in same package under src/test/"
+echo ""
+
+# Check if blocking is enabled
+if [ "${TEST_GATE:-0}" = "1" ]; then
+    echo "❌ BLOCKED: No tests for changed source files (TEST_GATE=1)"
+    exit 1
+fi
+
+echo "  ℹ️  To block on missing tests: TEST_GATE=1 git commit ..."
+echo ""
+
+exit 0
