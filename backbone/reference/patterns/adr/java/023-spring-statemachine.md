@@ -96,6 +96,5 @@ Spring Statemachine is the only option among those evaluated that provides nativ
 
 ## References
 
-- **[STATE_MACHINE.md](../STATE_MACHINE.md)** — Full implementation details: state hierarchy, guard logic, persistence model, per-user isolation
-- **[ADR-0002](0002-jdbi-over-jpa.md)** — JDBI over JPA: persistence strategy context
-- **[ADR-0001](0001-hexagonal-architecture.md)** — Hexagonal Architecture: framework isolation principles
+- **[ADR-0002](../../adr/002-jdbi-persistence.md)** — JDBI over JPA: persistence strategy context
+- **[ADR-0001](../../adr/001-hexagonal-architecture.md)** — Hexagonal Architecture: framework isolation principles

@@ -37,8 +37,11 @@ check_implementation_gate() {
     
     # Check if WIP task has design doc reference
     while IFS= read -r task; do
-        # Skip if task has design doc reference
+        # Skip if task has design doc or changes folder reference
         if echo "$task" | grep -qi 'design.*backbone/design/'; then
+            continue
+        fi
+        if echo "$task" | grep -qi 'backbone/artifacts/changes/'; then
             continue
         fi
         
@@ -48,10 +51,32 @@ check_implementation_gate() {
         fi
         
         # Check if PRD exists but design doc doesn't
-        local prd_ref
-        prd_ref=$(echo "$task" | grep -oE 'backbone/prd/[^)]+' | head -1 || true)
+        local prd_ref change_ref
+        prd_ref=$(echo "$task" | grep -oE 'backbone/artifacts/prd/[^)]+' | head -1 || true)
+        change_ref=$(echo "$task" | grep -oE 'backbone/artifacts/changes/[^ )]+' | head -1 || true)
         
-        if [ -n "$prd_ref" ]; then
+        if [ -n "$change_ref" ]; then
+            local change_base change_parent design_doc
+            change_base=$(basename "$change_ref")
+            change_parent=$(dirname "$change_ref")
+            design_doc="$PROJECT_DIR/$change_parent/$change_base/design.md"
+            if [ ! -f "$design_doc" ]; then
+                echo ""
+                echo -e "${YELLOW}⚠️  REVIEW GATE D→I NOT SATISFIED${NC}"
+                echo ""
+                echo "  WIP task references change folder but design.md is missing."
+                echo ""
+                echo "  Task: $(echo "$task" | head -1 | sed 's/^[[:space:]]*//')"
+                echo "  Expected: $design_doc"
+                echo ""
+                echo "  For feature work, use:"
+                echo "    /backbone:design-feature <name>"
+                echo ""
+                echo "  Or override: export CLAUDE_CODE_SKIP_RD_GATE=1"
+                echo ""
+                return 1
+            fi
+        elif [ -n "$prd_ref" ]; then
             # Extract feature name from PRD
             local feature
             feature=$(basename "$prd_ref" .md | sed 's/^[0-9]*-[0-9]*-[0-9]*-//')
@@ -60,8 +85,6 @@ check_implementation_gate() {
             local design_doc="$PROJECT_DIR/backbone/design/${feature}-design.md"
             
             if [ ! -f "$design_doc" ]; then
-                echo ""
-                echo -e "${YELLOW}⚠️  REVIEW GATE D→I NOT SATISFIED${NC}"
                 echo ""
                 echo "  Task: $task"
                 echo "  PRD exists but design doc missing: $design_doc"

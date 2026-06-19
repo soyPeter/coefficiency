@@ -354,6 +354,6 @@ class MetricsResourceTest {
 - `conventions-general.md` - Core principles
 - `java.md` - Java patterns and SOLID
 - `quarkus.md` - Full Quarkus microservice patterns (JDBI, Panache, etc.)
-- `backbone/4-KNOWLEDGE.md` - Tech stack, NEVER DO list
+- [`backbone/4-KNOWLEDGE.md`](backbone/4-KNOWLEDGE.md) - Tech stack, NEVER DO list
 
 *Last updated: 2026-05-08*

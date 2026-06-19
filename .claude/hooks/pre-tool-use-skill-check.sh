@@ -13,6 +13,15 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 KNOWLEDGE_FILE="$PROJECT_DIR/backbone/4-KNOWLEDGE.md"
 SKILL_ACK_FILE="$PROJECT_DIR/.claude/skill-acknowledgments.json"
 
+# ---- Light mode bypass ----
+if [ -f "$PROJECT_DIR/backbone/.MODE" ]; then
+    MODE=$(tr -d '[:space:]' < "$PROJECT_DIR/backbone/.MODE" 2>/dev/null || echo "standard")
+    if [ "$MODE" = "light" ]; then
+        echo "  🟢 LIGHT MODE: Advisory only — skill/layer check skipped."
+        exit 0
+    fi
+fi
+
 # Detect framework
 FRAMEWORK=""
 if [ -f "$KNOWLEDGE_FILE" ]; then

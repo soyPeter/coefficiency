@@ -91,7 +91,7 @@ WHEN [event], the [system] SHALL [response].
 
 - **Location:** `storage/changes/CHANGE-NNN.md`
 - **Index:** Add entry to `storage/changes/index.md`
-- **Task reference:** Link from `backbone/3-TASKS.md`:
+- **Task reference:** Link from [`backbone/3-TASKS.md`](backbone/3-TASKS.md):
   ```markdown
   - [ ] change: Add 2FA (Delta: storage/changes/CHANGE-001.md)
   ```

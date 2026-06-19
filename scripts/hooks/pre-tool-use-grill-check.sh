@@ -1,7 +1,7 @@
 #!/bin/bash
 # pre-tool-use-grill-check.sh: Gate G→P — Block PRDs without grill evidence
 #
-# Fires BEFORE Write/Edit to backbone/prd/*.md
+# Fires BEFORE Write/Edit to backbone/artifacts/prd/*.md
 # Checks that the PRD includes:
 #   1. `grilled: true` in frontmatter
 #   2. A `## Grilling` section with all 5 branches covered
@@ -26,6 +26,12 @@ if [ "${CLAUDE_CODE_SKIP_GRILL:-0}" = "1" ]; then
     exit 0
 fi
 
+# ---- Light mode bypass ----
+if [ -f "backbone/.MODE" ]; then
+    MODE=$(tr -d '[:space:]' < "backbone/.MODE" 2>/dev/null || echo "standard")
+    [ "$MODE" = "light" ] && echo "  🟢 LIGHT MODE: Advisory only — grill check skipped." && exit 0
+fi
+
 # Read stdin JSON from Claude Code
 INPUT=$(cat)
 [ -z "$INPUT" ] && exit 0
@@ -39,8 +45,8 @@ if [[ "$TOOL" != "Write" && "$TOOL" != "Edit" ]]; then
     exit 0
 fi
 
-# Only check backbone/prd/ files
-if [[ "$TARGET_FILE" != *"backbone/prd/"* ]]; then
+# Only check backbone/artifacts/prd/ or backbone/artifacts/changes/.../proposal.md files
+if [[ "$TARGET_FILE" != *"backbone/artifacts/prd/"* ]] && [[ "$TARGET_FILE" != *"backbone/artifacts/changes/"*"/proposal.md" ]]; then
     exit 0
 fi
 
@@ -72,15 +78,15 @@ if ! echo "$CONTENT" | grep -qE '^grilled:\s*true'; then
     echo ""
     echo -e "${YELLOW}⚠️  GRILL GATE G→P NOT SATISFIED${NC}"
     echo ""
-    echo "  PRD missing grill evidence: $(basename "$TARGET_FILE")"
+    echo "  proposal.md / PRD missing grill evidence: $(basename "$TARGET_FILE")"
     echo ""
     echo "  Missing: 'grilled: true' in frontmatter."
     echo ""
     echo "  For feature work, use the DESIGN-FEATURE command:"
     echo "    /backbone:design-feature <name>"
     echo ""
-    echo "  This will orchestrate: grill → EARS reqs → PRD → architecture →"
-    echo "  design doc → traceability → planning tasks"
+    echo "  This will orchestrate: grill → EARS reqs → proposal → architecture →"
+    echo "  design doc → traceability → tasks"
     echo ""
     echo "  Or override: export CLAUDE_CODE_SKIP_GRILL=1"
     echo ""
@@ -92,7 +98,7 @@ if ! echo "$CONTENT" | grep -qE '^##\s+Grill(ing|ed| Log)?\s*$'; then
     echo ""
     echo -e "${YELLOW}⚠️  GRILL GATE G→P NOT SATISFIED${NC}"
     echo ""
-    echo "  PRD missing grilling section: $(basename "$TARGET_FILE")"
+    echo "  proposal.md missing grilling section: $(basename "$TARGET_FILE")"
     echo ""
     echo "  Missing: '## Grilling' section with Q/A pairs."
     echo ""
@@ -130,7 +136,7 @@ if [ -n "$missing_branches" ]; then
     echo ""
     echo -e "${YELLOW}⚠️  GRILL GATE G→P NOT SATISFIED${NC}"
     echo ""
-    echo "  PRD grilling section incomplete: $(basename "$TARGET_FILE")"
+    echo "  proposal.md grilling section incomplete: $(basename "$TARGET_FILE")"
     echo ""
     echo "  Missing branches in '## Grilling':"
     echo -e "$missing_branches"
@@ -188,7 +194,7 @@ if echo "$qa_issues" | grep -q "^ISSUES:"; then
     echo ""
     echo -e "${YELLOW}⚠️  GRILL GATE G→P NOT SATISFIED${NC}"
     echo ""
-    echo "  PRD grilling section has insufficient Q/A pairs: $(basename "$TARGET_FILE")"
+    echo "  proposal.md grilling section has insufficient Q/A pairs: $(basename "$TARGET_FILE")"
     echo ""
     echo "  Each branch MUST have at least 2 Q/A pairs (4 lines minimum)."
     echo ""

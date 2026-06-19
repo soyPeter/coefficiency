@@ -146,7 +146,7 @@ class CreateCustomerUseCaseTest {
 ## Related Documentation
 
 - **Java Conventions**: `backbone/reference/java-conventions.md`
-- **Patterns**: `backbone/reference/patterns.md` - CQRS, Outbox, Idempotency
+- **Patterns**: [`backbone/reference/patterns.md`](backbone/reference/patterns.md) - CQRS, Outbox, Idempotency
 - **Full Guidelines**: `docs/NEW/documentation/developer/GUIDELINES.md`
 
 ---

@@ -68,7 +68,7 @@ Iterate until the user approves.
 
 ### 5. Publish
 
-For backbone generator projects, publish issues to `backbone/3-TASKS.md` under the relevant milestone.
+For backbone generator projects, publish issues to [`backbone/3-TASKS.md`](backbone/3-TASKS.md) under the relevant milestone.
 
 For generated projects with GitHub:
 - Publish each approved slice as a GitHub issue

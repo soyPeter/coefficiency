@@ -3,7 +3,7 @@
 
 **Status:** Complete  
 **Date:** 2026-04-26  
-**PRD:** `backbone/prd/20260426-observability-dashboard.md`
+**PRD:** [`backbone/artifacts/prd/20260426-observability-dashboard.md`](backbone/artifacts/prd/20260426-observability-dashboard.md)
 
 ---
 

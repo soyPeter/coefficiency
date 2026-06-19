@@ -16,13 +16,13 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 CHANGED_FILES=$(git diff --cached --name-only 2>/dev/null || true)
 
 # If no traceability files exist, skip
-if [ ! -d "$PROJECT_DIR/storage/traceability" ]; then
+if [ ! -d "$PROJECT_DIR/backbone/artifacts/traceability" ]; then
     exit 0
 fi
 
 # Check if any requirements-related files changed
 REQ_CHANGED=false
-if echo "$CHANGED_FILES" | grep -qE 'backbone/prd/|backbone/design/|storage/traceability/'; then
+if echo "$CHANGED_FILES" | grep -qE 'backbone/artifacts/prd/|backbone/design/|backbone/artifacts/changes/|backbone/artifacts/traceability/'; then
     REQ_CHANGED=true
 fi
 
@@ -51,7 +51,7 @@ if [ -f "$PROJECT_DIR/scripts/verify-traceability.sh" ]; then
         echo -e "${YELLOW}⚠️  REVIEW GATE I→V NOT SATISFIED${NC}"
         echo ""
         echo "  Traceability matrix has gaps. Before committing:"
-        echo "    1. Update storage/traceability/<feature>.yml"
+        echo "    1. Update backbone/artifacts/traceability/<feature>.yml"
         echo "    2. Run: ./scripts/verify-traceability.sh"
         echo "    3. Ensure all requirements link to code and tests"
         echo ""

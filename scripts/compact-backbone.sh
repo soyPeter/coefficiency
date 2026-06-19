@@ -18,9 +18,14 @@
 #   - Always backs up originals to .backup/ (reversible)
 
 set -euo pipefail
+if [[ -f "$HOME/.backbone/scripts/lib/bb-root.sh" ]]; then
+    source "$HOME/.backbone/scripts/lib/bb-root.sh"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+    BB_ROOT="$PROJECT_ROOT"
+fi
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'

@@ -150,7 +150,7 @@ After grilling, the natural next steps are:
 ## Integration with 3-TASKS.md
 
 If grilling reveals the task is larger than expected:
-- Update `backbone/3-TASKS.md` with the clarified scope
+- Update [`backbone/3-TASKS.md`](backbone/3-TASKS.md) with the clarified scope
 - Mark the original task as `[x]` if it was a placeholder
 - Create new, more granular tasks
 

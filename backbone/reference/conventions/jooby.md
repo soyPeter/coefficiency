@@ -144,47 +144,52 @@ public class MyService {
 
 ```java
 @Singleton
-@InjectModule(requires = Jdbi.class)
 public class App extends Jooby {
 
     public App() {
-        // Install Jooby modules
-        install(AvajeInjectModule.of());     // Avaje DI
-        install(new JdbiModule());            // JDBI
-        install(new FlywayModule());          // Flyway
+        // 1. Avaje DI first
+        install(AvajeInjectModule.of());
+        // 2. JSON serialization
+        install(new Jackson2Module());
+        // 3. Persistence modules
+        install(new JdbiModule());
+        install(new FlywayModule());
 
-        // Register MVC controllers (lifecycle managed by Avaje)
-        mvc(MyController.class);
+        // 4. MVC controllers (use generated _ classes from Jooby APT)
+        mvc(new MyController_());
+
+        // 5. Install app modules
+        install(new ExceptionMapper());
     }
 
     public static void main(String[] args) {
-        Jooby.runApp(args, App::new);
+        var options = new ServerOptions()
+                .setPort(8080)
+                .setIoThreads(4)
+                .setWorkerThreads(16)
+                .setMaxRequestSize(10485760)
+                .setHttp2(true);
+        Jooby.runApp(args, new NettyServer(options), App::new);
     }
 }
 ```
 
-## Module Installation Order
+### Module Installation Order
 
 1. `AvajeInjectModule.of()` — must be first (enables DI for subsequent modules)
-2. Framework modules (`JdbiModule`, `FlywayModule`, etc.)
-3. MVC controllers via `mvc()`
+2. `Jackson2Module()` — JSON serialization
+3. Framework modules (`JdbiModule`, `FlywayModule`, etc.)
+4. MVC controllers via `mvc(new Controller_())`
+5. App modules (exception mappers, config)
 
-## Service Resolution
-
-```java
-// Inside a route handler:
-MyService service = require(MyService.class);
-
-// With name qualifier:
-MyService service = require(MyService.class, "name");
-```
-
-## Build Configuration
+### Build Configuration
 
 ```kotlin
 plugins {
     id("java")
     id("application")
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.jooby.run)
 }
 
 application {
@@ -194,15 +199,38 @@ application {
 dependencies {
     annotationProcessor("io.avaje:avaje-inject-generator:12.5")
     annotationProcessor("io.jooby:jooby-apt:4.5.1")
-
     implementation(platform("io.avaje:avaje-inject:12.5"))
-    implementation("io.jooby:jooby:4.5.1")
-    implementation("io.jooby:jooby-netty:4.5.1")
-    implementation("io.jooby:jooby-avaje-inject:4.5.1")
-    implementation("io.jooby:jooby-jackson:4.5.1")
-    implementation("io.jooby:jooby-jdbi:4.5.1")
-    implementation("io.jooby:jooby-flyway:4.5.1")
+    // ...
 }
+
+tasks.compileJava {
+    options.compilerArgs.add("-parameters")
+    options.compilerArgs.add("-Ajooby.incremental=true")
+}
+```
+
+### Exception Handling
+
+```java
+@Singleton
+public class ExceptionMapper implements Jooby.Module {
+    @Override
+    public void configure(Jooby app) {
+        app.errorCode(IllegalArgumentException.class, StatusCode.BAD_REQUEST);
+        app.error((ctx, cause, statusCode) -> {
+            if (ctx.isResponseStarted()) return;
+            ctx.setResponseHeader("Content-Type", "application/json");
+            ctx.send("{\"error\":\"...\",\"status\":...}");
+        });
+    }
+}
+```
+
+## Service Resolution
+
+```java
+// Inside a route handler:
+MyService service = require(MyService.class);
 ```
 
 ## Never Do
@@ -212,3 +240,5 @@ dependencies {
 - Do NOT use `@Transactional` (Jakarta) — handle transactions manually via JDBI handle
 - Do NOT use `@InterceptorBinding` (CDI) — use `@Aspect` + `AspectProvider` (Avaje AOP)
 - Do NOT use JAX-RS annotations (`jakarta.ws.rs.*`) — use Jooby annotations (`io.jooby.annotation.*`)
+- Do NOT use `mvc(Controller.class)` — use `mvc(new Controller_())` (the APT generates `_` classes)
+- Do NOT use `Jooby.runApp(args, App::new)` without `ServerOptions` — use `new NettyServer(options)` for explicit config

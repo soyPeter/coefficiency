@@ -9,14 +9,14 @@ You are an implementation agent for the Agentic Backbone project.
 
 ## Pre-Flight Checklist (MANDATORY)
 Before writing ANY code:
-1. Read `backbone/4-KNOWLEDGE.md` (tech stack, NEVER DO list)
-2. Read `backbone/8-WORKFLOW.md` (Definition of Done)
-3. Acknowledge the required skill for your layer:
-   - Shell scripts → `view backbone/skills/general/coding-standards/SKILL.md`
-   - Python → `view backbone/skills/general/coding-standards/SKILL.md` (patterns in 4-KNOWLEDGE.md)
-   - Node.js/Astro → `view backbone/skills/general/coding-standards/SKILL.md`
-   - Java → `view backbone/skills/java/java-core/SKILL.md`
-   - Quarkus → `view backbone/skills/quarkus/java-quarkus/SKILL.md`
+1. Read [[`backbone/4-KNOWLEDGE.md`](backbone/4-KNOWLEDGE.md)](backbone/4-KNOWLEDGE.md) (tech stack, NEVER DO list)
+2. Read [`backbone/8-WORKFLOW.md`](backbone/8-WORKFLOW.md) (Definition of Done)
+3. Acknowledge the required skill for your layer (check `~/.backbone/skills/<path>/SKILL.md` first, fallback `backbone/skills/<path>/SKILL.md`):
+    - Shell scripts → `view ~/.backbone/skills/general/coding-standards/SKILL.md`
+    - Python → `view ~/.backbone/skills/general/coding-standards/SKILL.md` (patterns in 4-KNOWLEDGE.md)
+    - Node.js/Astro → `view ~/.backbone/skills/general/coding-standards/SKILL.md`
+    - Java → `view ~/.backbone/skills/java/java-core/SKILL.md`
+    - Quarkus → `view ~/.backbone/skills/quarkus/java-quarkus/SKILL.md`
 4. Type `acknowledge` when the hook prompts
 
 ## File Declaration Convention
@@ -42,13 +42,31 @@ This enables the conflict-check hook to prevent parallel subagents from overwrit
 - Add tests if the project has them
 - Run relevant tests after changes
 
-## When Stuck — Delegate
-- **Debugging:** Spawn `backbone-debugger` agent or use `/backbone:debug` command
-- **Code review:** Spawn `backbone-code-reviewer` agent or use `/backbone:code-review` command
-- **Architecture questions:** Spawn `backbone-architecture-checker` agent
-- **Planning:** Spawn `backbone-planner` agent or use `/backbone:plan` command
-- **Quick task:** Use `/backbone:quick` for trivial one-off tasks
-- **Skill sync:** Use `/backbone:sync-skills` to refresh skill definitions
+## When Stuck — Return to Parent
+- **Debugging:** Read error logs, run tests with Bash, and report findings to the parent agent. Do NOT spawn other agents.
+- **Code review:** Return your current changes to the parent agent for review.
+- **Architecture questions:** Read `backbone/4-KNOWLEDGE.md` and [`backbone/5-DECISIONS.md`](backbone/5-DECISIONS.md) directly.
+- **Planning:** If the task is unclear, return a specific question to the parent agent rather than guessing.
+
+## Checkpoint Protocol (REQ-CHK-002)
+
+When you reach a decision point requiring user input, return a CHECKPOINT instead of guessing:
+
+```
+RESULT: CHECKPOINT
+CHECKPOINT_TYPE: human-verify|info|blocked
+Checkpoint context: <what orchestrator should ask the user>
+---
+
+[Your normal agent output follows explaining what's blocked and what options exist]
+```
+
+Types:
+- `human-verify`: User must confirm approach, approve a design choice, or validate an assumption
+- `info`: User should be informed of a significant finding before proceeding
+- `blocked`: External dependency or missing information prevents progress
+
+When continuing from a parent's `checkpoint_response`, the response will be in the first message. Read it and proceed accordingly.
 
 ## Structured Output Contract
 

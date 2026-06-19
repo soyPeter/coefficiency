@@ -19,15 +19,15 @@ NC='\033[0m'
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 TASKS_FILE="$PROJECT_DIR/backbone/3-TASKS.md"
 
-# Check if this is a Write or Edit tool call
-TOOL_NAME="${1:-}"
-if [[ "$TOOL_NAME" != "Write" && "$TOOL_NAME" != "Edit" ]]; then
-    exit 0
-fi
-
 # Skip if CLAUDE_CODE_SKIP_WIP_CHECK is set (for emergency fixes)
 if [ "${CLAUDE_CODE_SKIP_WIP_CHECK:-0}" = "1" ]; then
     exit 0
+fi
+
+# ---- Light mode bypass ----
+if [ -f "backbone/.MODE" ]; then
+    MODE=$(tr -d '[:space:]' < "backbone/.MODE" 2>/dev/null || echo "standard")
+    [ "$MODE" = "light" ] && echo "  🟢 LIGHT MODE: Advisory only — WIP check skipped." && exit 0
 fi
 
 # Check if tasks file exists

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#<!-- VERSION: 2026.04.25 -->
+#<!-- VERSION: 2026.05.29 -->
 # PostToolUse Read Tracker
 # Trigger: PostToolUse on Read tool calls
 # Behavior: Records read file paths to session tracker for read-guard enforcement

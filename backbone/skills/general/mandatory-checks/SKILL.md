@@ -41,13 +41,12 @@ This skill documents all enforcement mechanisms in the Agentic Backbone. **These
 **Rule:** If a `[WIP]` task references a PRD, you MUST read it before writing code.
 
 **Trigger:**
-- Task line contains `backbone/prd/...`
-- PRD file exists
-- You have not yet acknowledged reading it
+- Task line contains `backbone/artifacts/changes/CHNG-XXX/proposal.md`
 
-**Action:**
-```
-view backbone/prd/YYYYMMDD-feature.md
+- [ ] Proposal exists at `backbone/artifacts/changes/CHNG-XXX/proposal.md`
+- [ ] Proposal frontmatter includes `grilled: true`
+- [ ] Tasks reference the change folder  
+view backbone/artifacts/changes/CHNG-XXX/proposal.md
 acknowledge-spec
 ```
 
@@ -120,6 +119,6 @@ acknowledge
 ## Emergency Escape
 
 If you are absolutely stuck and the user explicitly tells you to bypass:
-1. Document the bypass reason in `backbone/6-MEMORY.md`
+1. Document the bypass reason in [`backbone/6-MEMORY.md`](backbone/6-MEMORY.md)
 2. Get user confirmation in writing
 3. Use `git commit --no-verify` (last resort only)

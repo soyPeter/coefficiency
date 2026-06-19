@@ -76,7 +76,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-bash-safety-check.sh\""
+            "command": "bash $HOME/.backbone/scripts/hooks/pre-bash-safety-check.sh"
           }
         ]
       },
@@ -85,7 +85,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-subagent-conflict-check.sh\"",
+            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-subagent-conflict-check.sh",
             "timeout": 5,
             "statusMessage": "Checking subagent conflicts..."
           }
@@ -96,57 +96,45 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-wip-check.sh\"",
+            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-wip-check.sh",
             "timeout": 5,
             "statusMessage": "Checking WIP policy..."
           },
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/review-gate-check.sh\"",
+            "command": "bash $HOME/.backbone/scripts/hooks/review-gate-check.sh",
             "timeout": 5,
             "statusMessage": "Checking review gates..."
           },
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-rd-gate.sh\"",
+            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-rd-gate.sh",
             "timeout": 5,
-            "statusMessage": "Checking PRD→Design gate..."
+            "statusMessage": "Checking PRD\u2192Design gate..."
           },
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-grill-check.sh\"",
+            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-grill-check.sh",
             "timeout": 5,
             "statusMessage": "Checking grill evidence..."
           },
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/check-conventions.sh\"",
-            "timeout": 10,
-            "statusMessage": "🔍 Checking __FRAMEWORK__ conventions..."
-          },
-          {
-            "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-skill-check.sh\"",
-            "timeout": 5,
-            "statusMessage": "Checking layer conventions..."
-          },
-          {
-            "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-task-completion-check.sh\"",
-            "timeout": 10,
-            "statusMessage": "Checking task completion criteria..."
-          },
-          {
-            "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/pre-tool-use-task-granularity-check.sh\"",
+            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-task-granularity-check.sh",
             "timeout": 5,
             "statusMessage": "Checking task granularity..."
           },
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/pre-tool-use-memory-check.sh\"",
+            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-conventions-check.sh",
             "timeout": 5,
-            "statusMessage": "Checking MEMORY documentation..."
+            "statusMessage": "Checking conventions read..."
+          },
+          {
+            "type": "command",
+            "command": "bash $HOME/.backbone/claude/hooks/check-conventions.sh",
+            "timeout": 10,
+            "statusMessage": "\ud83d\udd0d Checking project conventions..."
           }
         ]
       }
@@ -157,7 +145,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/session-start-workflow-check.sh\""
+            "command": "bash $HOME/.backbone/scripts/hooks/session-start-workflow-check.sh"
           }
         ]
       },
@@ -166,17 +154,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/session-start-drift-check.sh\""
-          }
-        ]
-      },
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/session-start-skills.sh\"",
-            "statusMessage": "Loading required skills..."
+            "command": "bash $HOME/.backbone/scripts/hooks/session-start-drift-check.sh"
           }
         ]
       }
@@ -187,7 +165,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/stop-wip-check.sh\""
+            "command": "bash $HOME/.backbone/scripts/hooks/stop-wip-check.sh"
           }
         ]
       },
@@ -196,7 +174,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/check-dod.sh\"",
+            "command": "bash $HOME/.backbone/claude/hooks/check-dod.sh",
             "timeout": 5
           }
         ]
@@ -208,7 +186,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/post-commit-dod-reminder.sh\""
+            "command": "bash $HOME/.backbone/scripts/hooks/post-commit-dod-reminder.sh"
           }
         ]
       },
@@ -217,18 +195,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/post-edit-layer-check.sh\""
-          },
-          {
-            "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/post-tool-use-uuid-warning.sh\"",
-            "timeout": 5,
-            "statusMessage": "Checking UUID vs TSID usage..."
-          },
-          {
-            "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/discovery-tracker.sh\"",
-            "statusMessage": "Tracking discoveries..."
+            "command": "bash $HOME/.backbone/scripts/hooks/post-edit-layer-check.sh"
           }
         ]
       },
@@ -237,16 +204,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/post-write-scaffold-check.sh\""
+            "command": "bash $HOME/.backbone/scripts/hooks/post-write-scaffold-check.sh"
           }
         ]
       },
       {
-        "matcher": "Write.*backbone/decisions|Write.*backbone/prd|Write.*backbone/tasks|Write.*5-DECISIONS|Write.*1-PRD|Write.*3-TASKS",
+        "matcher": "Write.*backbone/decisions|Write.*backbone/prd|Write.*backbone/tasks|Write.*backbone/changes|Write.*5-DECISIONS|Write.*1-PRD|Write.*3-TASKS|Write.*proposal\\.md|Write.*design\\.md|Write.*tasks\\.md",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/post-doc-check.sh\"",
+            "command": "bash $HOME/.backbone/scripts/hooks/post-doc-check.sh",
             "timeout": 10,
             "statusMessage": "Checking documentation sync..."
           }
@@ -257,7 +224,10 @@
   "mcpServers": {
     "context7": {
       "command": "npx",
-      "args": ["-y", "@upstash/context7"]
+      "args": [
+        "-y",
+        "@upstash/context7"
+      ]
     }
   }
 }

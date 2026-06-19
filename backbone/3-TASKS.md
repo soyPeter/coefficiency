@@ -15,10 +15,64 @@
 | **M3: Security** | [x] | 100% | Auth, HMAC tokens, AES-256-GCM DB encryption |
 | **M4: Consultant Management** | [x] | 100% | CRUD, billing, clients, CSV import |
 | **M5: COEF Simulator** | [x] | 100% | Tax engine (IRPF+SS), COEF calc, fiscal config |
+| **M6: Code Review Remediation** | [ ] | 0% | Fix 5 blockers, 10 warnings, 8 suggestions; add tests |
 
 ---
 
 ## Active Milestones
+
+### M6: Code Review Remediation
+*Fix review findings: 5 blockers, 10 warnings, 8 suggestions, zero tests. See REVIEW.md.*
+
+#### Blockers (MUST FIX)
+
+- [ ] [M] fix: align auth token algorithm between generator and decoder in AuthController.java
+- [ ] [M] fix: resolve JDBI column-mapping mismatch for findById queries in SqliteAuthRepository
+- [ ] [M] fix: implement ignored sort/search/order params in list endpoints across BillingService
+- [ ] [S] fix: add proper CSV parsing with quote escaping in FileImportController
+- [ ] [S] fix: align INSERT/UPDATE column order with SELECT positional binding across JDBI repos
+
+#### Warnings (SHOULD FIX)
+
+- [ ] [S] fix: replace hardcoded HMAC secret with config-driven value in AuthService
+- [ ] [S] fix: remove dead ExceptionMapper or wire it into Jooby error handling
+- [ ] [S] fix: replace misleading @RegisterConstructorMapper with row mapper in JDBI repos
+- [ ] [S] refactor: move Jdbi injection from controllers into service layer (auth, billing, client)
+- [ ] [S] refactor: unify controller package locations under infra/io/rest/
+- [ ] [XS] fix: reuse shared ObjectMapper instance instead of creating per-call
+- [ ] [S] feat: add file upload validation (type, size, content) in FileImportController
+- [ ] [XS] fix: enforce reasonable minimum password length (8+ chars) in AuthService
+- [ ] [S] fix: distinguish 503 service-unavailable from auth failure in frontend api.ts
+- [ ] [XS] fix: remove spurious @Inject annotations on no-arg constructors
+
+#### Suggestions (CONSIDER)
+
+- [ ] [S] feat: add input validation for simulator concept parameters
+- [ ] [XS] fix: reconcile hardcoded defaults with application.conf values
+- [ ] [XS] fix: reuse SecureRandom instance instead of creating per-call
+- [ ] [XS] refactor: extract magic strings into named constants
+- [ ] [XS] fix: remove redundant exempt paths from AuthFilter
+- [ ] [M] refactor: split oversized SimulatorPage (878 lines) into sub-components
+- [ ] [M] refactor: split oversized useIdleTimer hook (387 lines) into smaller hooks
+- [ ] [XS] fix: standardize i18n keys to single language (English)
+
+#### Architecture
+
+- [ ] [M] refactor: apply DDD/Hexagonal layers to auth module (domain/app/infra separation)
+- [ ] [M] refactor: apply DDD/Hexagonal layers to billing module
+- [ ] [M] refactor: apply DDD/Hexagonal layers to client module
+- [ ] [M] refactor: apply DDD/Hexagonal layers to simulator module
+- [ ] [S] refactor: apply DDD/Hexagonal layers to doc and file-import modules
+
+#### Test Coverage
+
+- [ ] [M] test: add unit tests for TaxEngine and SimulatorService
+- [ ] [S] test: add unit tests for AuthService and DbEncryption
+- [ ] [S] test: add unit tests for BillingService and ClientService
+- [ ] [S] test: add integration tests for AuthController endpoints
+- [ ] [S] test: add integration tests for ConsultantController CRUD
+- [ ] [S] test: add integration tests for SimulatorController endpoints
+- [ ] [S] test: add frontend component tests for LoginPage and SimulatorPage
 
 ### M5: COEF Simulator
 *Tax engine (IRPF+SS), COEF calculator, fiscal configuration.*

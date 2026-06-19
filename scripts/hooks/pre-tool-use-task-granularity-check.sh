@@ -23,6 +23,12 @@ if [ "${CLAUDE_CODE_SKIP_GRANULARITY:-0}" = "1" ]; then
     exit 0
 fi
 
+# ---- Light mode bypass ----
+if [ -f "backbone/.MODE" ]; then
+    MODE=$(tr -d '[:space:]' < "backbone/.MODE" 2>/dev/null || echo "standard")
+    [ "$MODE" = "light" ] && echo "  🟢 LIGHT MODE: Advisory only — task granularity check skipped." && exit 0
+fi
+
 # Read stdin JSON from Claude Code
 INPUT=$(cat)
 [ -z "$INPUT" ] && exit 0
@@ -125,13 +131,26 @@ validate_task() {
         errors="${errors}\n    - Contains scope bloat word(s): '$found_bloat'. Each task must do ONE concrete thing."
     fi
 
-    # ── 5. Planning doc check (hard gate B) ─────────────────────────────────
-    # Only for non-exempt tasks that reference a PRD
+    # ── 5. Tasks doc check (hard gate B) ────────────────────────────────────
+    # Only for non-exempt tasks that reference a PRD or changes folder
     if [ "$is_exempt" = false ]; then
-        local prd_ref
-        prd_ref=$(echo "$task_line" | grep -oE 'backbone/prd/[^ )]+\.md' | head -1 || true)
+        local prd_ref change_ref
+        prd_ref=$(echo "$task_line" | grep -oE 'backbone/artifacts/prd/[^ )]+\.md' | head -1 || true)
+        change_ref=$(echo "$task_line" | grep -oE 'backbone/artifacts/changes/[^ )]+' | head -1 || true)
 
-        if [ -n "$prd_ref" ]; then
+        if [ -n "$change_ref" ]; then
+            # Check for tasks.md in the changes/ folder
+            local change_dir="$PROJECT_DIR/$change_ref"
+            # change_ref is e.g. backbone/artifacts/changes/CHNG-001 — dirname gives backbone/changes
+            local change_base
+            change_base=$(basename "$change_ref")  # CHNG-001
+            local change_parent
+            change_parent=$(dirname "$change_ref") # backbone/changes
+            local tasks_file="$PROJECT_DIR/$change_parent/$change_base/tasks.md"
+            if [ ! -f "$tasks_file" ]; then
+                errors="${errors}\n    - tasks.md not found in change folder: $change_ref\n      Expected: $tasks_file"
+            fi
+        elif [ -n "$prd_ref" ]; then
             local prd_basename
             prd_basename=$(basename "$prd_ref" .md)
             local feature_name
@@ -141,7 +160,6 @@ validate_task() {
             local planning_found=false
 
             if [ -d "$planning_dir" ]; then
-                # Check for exact match or partial match
                 for candidate in "$planning_dir"/*.md; do
                     [ -f "$candidate" ] || continue
                     local candidate_base
@@ -154,7 +172,7 @@ validate_task() {
             fi
 
             if [ "$planning_found" = false ]; then
-                errors="${errors}\n    - Missing planning doc for PRD: $prd_ref\n      Expected: backbone/planning/*$feature_name*.md"
+                errors="${errors}\n    - Missing planning doc for PRD: $prd_ref\n      Expected: backbone/artifacts/planning/*$feature_name*.md"
             fi
         fi
     fi
@@ -212,7 +230,7 @@ if [ "$errors_found" = true ]; then
     echo -e "$error_report"
     echo ""
     echo "  Requirements for non-exempt tasks:"
-    echo "    1. Planning doc MUST exist: backbone/planning/<feature-name>.md"
+    echo "    1. Planning doc MUST exist: backbone/artifacts/planning/<feature-name>.md"
     echo "    2. Size tag REQUIRED: [XS], [S], [M], [L]  (XL forbidden)"
     echo "    3. Minimum 5 words describing WHAT + WHERE"
     echo "    4. Use concrete verbs: add, fix, remove, configure, validate, create, update, extract, refactor"

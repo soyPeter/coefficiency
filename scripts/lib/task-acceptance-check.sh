@@ -34,27 +34,49 @@ is_task_exempt() {
 }
 
 # Extract PRD reference from task line.
-# Looks for patterns like: backbone/prd/YYYY-MM-DD-feature.md or (PRD: ...)
+# Looks for patterns like: backbone/artifacts/prd/YYYY-MM-DD-feature.md or (PRD: ...)
 extract_prd_from_task() {
     local task_line="$1"
     local prd_ref
 
-    # Pattern 1: (PRD: backbone/prd/file.md)
-    prd_ref=$(echo "$task_line" | grep -oE 'backbone/prd/[^)]+\.md' | head -1 || true)
+    # Pattern 1: (PRD: backbone/artifacts/prd/file.md)
+    prd_ref=$(echo "$task_line" | grep -oE 'backbone/artifacts/prd/[^)]+\.md' | head -1 || true)
     if [ -n "$prd_ref" ]; then
         echo "$prd_ref"
         return 0
     fi
 
-    # Pattern 2: PRD: backbone/prd/file.md
-    prd_ref=$(echo "$task_line" | grep -oE 'PRD:\s*backbone/prd/[^ ]+\.md' | sed 's/PRD://' | awk '{print $1}' | head -1 || true)
+    # Pattern 2: PRD: backbone/artifacts/prd/file.md
+    prd_ref=$(echo "$task_line" | grep -oE 'PRD:\s*backbone/artifacts/prd/[^ ]+\.md' | sed 's/PRD://' | awk '{print $1}' | head -1 || true)
     if [ -n "$prd_ref" ]; then
         echo "$prd_ref"
         return 0
     fi
 
-    # Pattern 3: Infer from task description (feature name)
-    # Try to find a PRD that matches keywords from the task
+    # Pattern 3: Look for proposal.md in backbone/artifacts/changes/ (new path)
+    if [ -d "backbone/changes" ]; then
+        local chng_proposal
+        chng_proposal=$(echo "$task_line" | grep -oE 'backbone/artifacts/changes/CHNG-[^/]+/proposal\.md' | head -1 || true)
+        if [ -n "$chng_proposal" ]; then
+            echo "$chng_proposal"
+            return 0
+        fi
+        # Pattern 4: Look for any proposal.md in CHNG folders matching task keywords
+        local task_keyword
+        task_keyword=$(echo "$task_line" | grep -oE 'Task [0-9]+' | head -1 || true)
+        if [ -z "$task_keyword" ]; then
+            task_keyword=$(echo "$task_line" | grep -oE '[A-Z][a-z]+' | head -1 || true)
+        fi
+        # Try to find proposal.md in any change folder
+        for chng_dir in backbone/artifacts/changes/CHNG-*; do
+            [ -d "$chng_dir" ] || continue
+            local prop="$chng_dir/proposal.md"
+            if [ -f "$prop" ]; then
+                echo "$prop"
+                return 0
+            fi
+        done
+    fi
     return 1
 }
 
@@ -72,7 +94,7 @@ get_req_ids_from_prd() {
 
     # Extract REQ- IDs from the PRD content
     # Matches lines like: "  REQ-AUTH-001: When the user ..." or "- REQ-AUTH-001"
-    grep -oE 'REQ-[A-Z]+-[0-9]+' "$prd_file" | sort -u || true
+    grep -oE 'REQ-[A-Z0-9]+-[0-9]+' "$prd_file" | sort -u || true
 }
 
 # ── Traceability Verification ───────────────────────────────────────────────
@@ -84,7 +106,7 @@ check_req_traceability() {
     local project_dir="$1"
     local req_id="$2"
 
-    local trace_dir="$project_dir/storage/traceability"
+    local trace_dir="$project_dir/backbone/artifacts/traceability"
     local code_status="missing"
     local tests_status="missing"
 
@@ -195,7 +217,7 @@ check_task_completion() {
         echo "  Task: $task_line" >&2
         echo "" >&2
         echo "  Required format:" >&2
-        echo "    - [ ] feat: Description (PRD: backbone/prd/YYYY-MM-DD-feature.md)" >&2
+        echo "    - [ ] feat: Description (PRD: backbone/artifacts/prd/YYYY-MM-DD-feature.md)" >&2
         echo "" >&2
         echo "  Or mark as fix/docs/refactor if no PRD needed." >&2
         echo "" >&2

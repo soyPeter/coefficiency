@@ -119,7 +119,7 @@ Arrange tasks so that:
 
 ## Writing Tasks for 3-TASKS.md
 
-When you write tasks to `backbone/3-TASKS.md`, you MUST follow this format:
+When you write tasks to [`backbone/3-TASKS.md`](backbone/3-TASKS.md), you MUST follow this format:
 
 ```markdown
 - [ ] [S] feat: add email regex validator to UserRegistrationUseCase

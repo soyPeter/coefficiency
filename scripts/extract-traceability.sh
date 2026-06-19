@@ -83,10 +83,21 @@ while IFS='|' read -r id type file; do
     feature=""
     
     if [ -d "$PROJECT_DIR/backbone/prd" ]; then
-        for prd in "$PROJECT_DIR/backbone/prd/"*.md; do
+        for prd in "$PROJECT_DIR/backbone/artifacts/prd/"*.md; do
             [ -f "$prd" ] || continue
             if grep -q "$id" "$prd" 2>/dev/null; then
                 feature=$(basename "$prd" .md | sed 's/^[0-9]*-[0-9]*-[0-9]*-//')
+                break
+            fi
+        done
+    fi
+    # Also check changes/proposal.md files
+    if [ -z "$feature" ] && [ -d "$PROJECT_DIR/backbone/changes" ]; then
+        for proposal in "$PROJECT_DIR/backbone/changes"/CHNG-*/proposal.md; do
+            [ -f "$proposal" ] || continue
+            if grep -q "$id" "$proposal" 2>/dev/null; then
+                change_dir=$(basename "$(dirname "$proposal")")
+                feature="${change_dir#CHNG-}"
                 break
             fi
         done
@@ -112,13 +123,13 @@ done < "$TMP_DIR/refs.txt"
 
 if [ ! -s "$TMP_DIR/feature_map.txt" ]; then
     echo -e "${YELLOW}⚠️  No REQ-IDs could be mapped to features${NC}"
-    echo "  Ensure PRDs exist in backbone/prd/ containing REQ- IDs."
+    echo "  Ensure proposals exist in backbone/artifacts/changes/CHNG-XXX/proposal.md or backbone/artifacts/prd/ containing REQ- IDs."
     exit 0
 fi
 
 # ── Step 3: Generate traceability YAML files ───────────────────────────────
 
-mkdir -p "$PROJECT_DIR/storage/traceability"
+mkdir -p "$PROJECT_DIR/backbone/artifacts/traceability"
 
 export TMP_DIR PROJECT_DIR
 
@@ -150,13 +161,13 @@ with open(f'{TMP_DIR}/feature_map.txt', 'r') as f:
 # Generate YAML files
 updated = 0
 for feature in sorted(feature_data.keys()):
-    trace_file = os.path.join(PROJECT_DIR, 'storage/traceability', f'{feature}.yml')
+    trace_file = os.path.join(PROJECT_DIR, 'backbone/artifacts/traceability', f'{feature}.yml')
     reqs = feature_data[feature]
     
     lines = []
     lines.append(f'feature: "{feature}"')
-    lines.append(f'prd: "backbone/prd/YYYY-MM-DD-{feature}.md"')
-    lines.append(f'design: "backbone/design/{feature}-design.md"')
+    lines.append(f'prd: "backbone/artifacts/changes/CHNG-XXX/proposal.md"')
+    lines.append(f'design: "backbone/artifacts/changes/CHNG-XXX/design.md"')
     lines.append('')
     lines.append('requirements:')
     
@@ -195,6 +206,6 @@ echo ""
 echo -e "${GREEN}✅ Traceability extraction complete${NC}"
 echo ""
 echo "Next steps:"
-echo "  1. Review files in storage/traceability/"
+echo "  1. Review files in backbone/artifacts/traceability/"
 echo "  2. Update PRD and design doc paths if needed"
 echo "  3. Run: ./scripts/verify-traceability.sh"

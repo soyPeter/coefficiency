@@ -137,7 +137,7 @@ What this PRD explicitly does NOT cover.
 Any additional context.
 ```
 
-4. **Publish** the PRD to `backbone/prd/` and reference it from `backbone/3-TASKS.md`.
+4. **Publish** the proposal to `backbone/artifacts/changes/CHNG-XXX/proposal.md` and reference it from [`backbone/3-TASKS.md`](backbone/3-TASKS.md).
 
 ## Notes
 

@@ -167,11 +167,11 @@ Query and present three buckets, oldest first:
 4. **Grill (if needed).** If issue needs fleshing out, run `/grill-with-docs` or `/grill-me`.
 
 5. **Apply the outcome:**
-   - `ready-for-agent` — post an agent brief (see [backbone/knowledge/AGENT-BRIEF.md](../../knowledge/AGENT-BRIEF.md))
+   - `ready-for-agent` — post an agent brief (see [backbone/knowledge/AGENT-BRIEF.md](../../../knowledge/AGENT-BRIEF.md))
    - `ready-for-human` — same structure as agent brief, note why it can't be delegated
    - `needs-info` — post triage notes (template below)
    - `wontfix` (bug) — polite explanation, then close
-   - `wontfix` (enhancement) — write to `.out-of-scope/`, link from comment, then close (see [backbone/knowledge/OUT-OF-SCOPE.md](../../knowledge/OUT-OF-SCOPE.md))
+   - `wontfix` (enhancement) — write to `.out-of-scope/`, link from comment, then close (see [backbone/knowledge/OUT-OF-SCOPE.md](../../../knowledge/OUT-OF-SCOPE.md))
 
 #### Needs-Info Template
 

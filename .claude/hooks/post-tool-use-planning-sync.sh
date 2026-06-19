@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # .claude/hooks/post-tool-use-planning-sync.sh
-# Auto-sync backbone/planning/STATE.md from backbone/3-TASKS.md
+# Auto-sync backbone/artifacts/planning/STATE.md from backbone/3-TASKS.md
 # =============================================================================
 # Trigger: PostToolUse on Write/Edit to backbone/*.md
 # Action: Parse 3-TASKS.md, regenerate STATE.md sections
@@ -17,7 +17,8 @@ if [[ -z "$PROJECT_ROOT" ]]; then
 fi
 
 TASKS_FILE="$PROJECT_ROOT/backbone/3-TASKS.md"
-STATE_FILE="$PROJECT_ROOT/backbone/planning/STATE.md"
+STATE_FILE="$PROJECT_ROOT/backbone/artifacts/changes/STATE.md"
+mkdir -p "$(dirname "$STATE_FILE")"
 HASH_FILE="/tmp/backbone-tasks-hash-$(echo "$PROJECT_ROOT" | tr '/' '_')"
 
 # ── Only proceed if 3-TASKS.md exists ──────────────────────────────────────

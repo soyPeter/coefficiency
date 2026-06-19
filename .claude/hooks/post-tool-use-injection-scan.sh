@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#<!-- VERSION: 2026.05.03 -->
+#<!-- VERSION: 2026.05.29 -->
 # PostToolUse Read-Time Injection Scanner
 # Trigger: PostToolUse on Read tool calls
 # Behavior: Scans read content for injection patterns and summarization poisoning

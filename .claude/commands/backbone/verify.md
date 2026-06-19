@@ -1,15 +1,18 @@
 ---
 name: backbone:verify
-description: Run full verification pipeline — tests, build, template sync, security scan, and health checks.
+description: Run full verification pipeline — tests, build, template sync, security scan, requirement traceability, and health checks.
 allowed-tools:
   - Read
   - Bash
   - Glob
   - Grep
+required-skills: []
 ---
 
 <objective>
 Execute the complete verification pipeline for the Agentic Backbone generator.
+Includes requirement traceability: validates every REQ-ID from the current
+change folder has corresponding code and tests.
 
 **Pipeline steps:**
 1. Run all test suites (bash, python, node)
@@ -19,6 +22,8 @@ Execute the complete verification pipeline for the Agentic Backbone generator.
 5. Check hook parity
 6. Validate skill frontmatter
 7. Verify STATE.md is current
+8. **Validate requirement traceability** — checks current change folder's REQ-IDs
+   against traceability matrix for code + test coverage
 
 **Output:** VERIFICATION.md report with PASS/FAIL for each step.
 </objective>
@@ -68,18 +73,30 @@ Execute the complete verification pipeline for the Agentic Backbone generator.
    ```
    - Verify STATE.md reflects current 3-TASKS.md
 
-8. **Generate Report**
-   - Write to `backbone/planning/VERIFICATION.md`
-   - Include timestamp, results, failures, recommendations
-   - Format:
-     ```markdown
-     # Verification Report — YYYY-MM-DD HH:MM:SS
-     
-     | Step | Status | Details |
-     |------|--------|---------|
-     | Tests | ✅/❌ | ... |
-     ...
+8. **Requirement Traceability** (only if a change folder exists)
+   - Detect the active change folder:
+     ```bash
+     ls -d backbone/artifacts/changes/CHNG-*/
      ```
+   - Read the proposal.md, extract all REQ-IDs:
+     ```bash
+     grep -oE 'REQ-[A-Z0-9]+-[0-9]+' backbone/artifacts/changes/CHNG-XXX/proposal.md
+     ```
+   - For each REQ-ID, check the traceability matrix
+   - Report gaps as a table
+
+9. **Auto-Register NCRs for Failures**
+   For each step that FAILED, auto-register an NCR:
+   ```bash
+   ./scripts/qms-register-issue.sh \
+     --title "Verify failure: [step] - [details]" \
+     --severity [level] \
+     --category [type]
+   ```
+
+10. **Generate Report**
+    - Write to `backbone/artifacts/changes/VERIFICATION.md`
+    - Include timestamp, results, failures, NCRs registered
 </process>
 
 <success_criteria>
@@ -90,5 +107,6 @@ Execute the complete verification pipeline for the Agentic Backbone generator.
 - [ ] All hooks executable
 - [ ] All skills valid
 - [ ] STATE.md current
-- [ ] VERIFICATION.md written
+- [ ] Every REQ-ID in the active change folder has code + tests
+- [ ] VERIFICATION.md written with full results table
 </success_criteria>

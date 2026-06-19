@@ -1,7 +1,7 @@
 ---
 name: backbone:debug
-description: Systematic debugging with persistent session state. Creates structured debug sessions in backbone/debug/{slug}.md.
-argument-hint: "[issue description] | list | status <slug> | continue <slug> | --diagnose"
+description: Systematic debugging with persistent session state and checkpoint protocol
+argument-hint: "[issue description] | list | status <slug> | continue <slug>"
 allowed-tools:
   - Read
   - Write
@@ -9,97 +9,81 @@ allowed-tools:
   - Bash
   - Glob
   - Grep
-  - Task
-  - AskUserQuestion
+  - Question
 ---
 
-<objective>
-Debug issues using scientific method with session persistence across context resets.
+Debug: $ARGUMENTS
 
-**When to use:**
-- Application bug or unexpected behavior
-- Test failures that need root cause analysis
-- Performance issues requiring systematic investigation
-- Intermittent failures that need tracking over time
+## Subcommands
 
-**Subcommands:**
-- `list` — Show all active debug sessions
-- `status <slug>` — Print summary of a session without spawning agent
-- `continue <slug>` — Resume an existing debug session
-- `--diagnose` — Find root cause only, don't apply fix
+Parse $ARGUMENTS for subcommand (first word):
 
-**Session Persistence:**
-Each session creates `backbone/debug/{slug}.md` with:
-- Frontmatter (status, trigger, created, updated)
-- Current Focus (hypothesis, next_action)
-- Evidence (timestamped findings)
-- Eliminated (disproven hypotheses)
-- Resolution (root_cause, fix, verification)
-</objective>
+- `list`: List all debug sessions in `backbone/debug/`
+- `status <slug>`: Show session state without resuming
+- `continue <slug>`: Resume a session from its last state
+- `<anything else>`: Start a new debug session
 
-<process>
-1. **Parse Arguments**
-   - If `$ARGUMENTS` starts with "list": SUBCMD=list
-   - If `$ARGUMENTS` starts with "status ": SUBCMD=status, SLUG=remainder
-   - If `$ARGUMENTS` starts with "continue ": SUBCMD=continue, SLUG=remainder
-   - If `$ARGUMENTS` contains `--diagnose`: diagnose_only=true
-   - Otherwise: SUBCMD=debug, description=$ARGUMENTS
+## New Session Flow
 
-2. **LIST Subcommand**
-   - Run: `ls backbone/debug/*.md 2>/dev/null | grep -v resolved | head -10`
-   - For each file, parse frontmatter and Current Focus
-   - Display formatted table with slug, status, hypothesis, next_action
-   - STOP after displaying
+1. **Symptom gathering** — Ask user 5 questions:
+   - What did you expect to happen?
+   - What actually happened?
+   - Error messages or stack traces?
+   - When did this start / what changed?
+   - Can you reproduce it reliably?
 
-3. **STATUS Subcommand**
-   - Check `backbone/debug/{SLUG}.md` exists
-   - Parse and print: frontmatter, Current Focus, evidence count, eliminated count
-   - STOP after printing
+2. **Create session file** at `backbone/debug/{slug}.md` with YAML frontmatter:
+   ```yaml
+   state: observe  # observe → hypothesis → experiment → validate → resolved
+   created: <timestamp>
+   slug: <slug>
+   ```
 
-4. **CONTINUE Subcommand**
-   - Check `backbone/debug/{SLUG}.md` exists
-   - Read Current Focus block
-   - Print summary to console
-   - Spawn `backbone-debugger` agent with `continue` mode
-   - Display compact summary after agent returns
+3. **Scientific method loop:**
+   - **Observe** — Document symptoms, reproduction steps, environment
+   - **Hypothesize** — Propose root cause with evidence. Create numbered hypotheses list
+   - **Experiment** — Design minimal test to confirm/disprove. Spawn explorer agent if needed
+   - **Validate** — Confirm fix, update session file, mark resolved
 
-5. **DEBUG Subcommand (New Issue)**
-   a. **Gather Symptoms** (AskUserQuestion):
-      - Expected behavior?
-      - Actual behavior?
-      - Error messages?
-      - When did this start?
-      - How to reproduce?
+4. **Agent return types** (REQ-DBG-004.2):
+   ```
+   RESULT: COMPLETE
+   ---
+   Root cause identified and fix verified.
    
-   b. **Generate Slug**
-      - Lowercase, replace spaces/non-alphanumeric with hyphens
-      - Strip path traversal chars (., /, \, :)
-      - Max 30 chars
-      - Example: "Login fails on mobile" → "login-fails-on-mobile"
+   RESULT: CHECKPOINT
+   CHECKPOINT_TYPE: human-verify
+   Checkpoint context: <what needs user input>
+   ---
    
-   c. **Create Session File**
-      - Ensure `backbone/debug/` directory exists
-      - Write initial state to `backbone/debug/{slug}.md`
-      - status: investigating
-      - trigger: verbatim user description
-      - symptoms: all gathered values
-      - Current Focus: next_action = "gather initial evidence"
+   RESULT: CHECKPOINT
+   CHECKPOINT_TYPE: blocked
+   Checkpoint context: <what's blocking>
+   ---
    
-   d. **Spawn Debugger Agent**
-      - Spawn `backbone-debugger` agent with session_params
-      - Pass: slug, file_path, symptoms, diagnose_only flag
-      - Agent handles scientific method loop in isolated context
-   
-   e. **Display Results**
-      - Show compact summary from agent
-      - If DEBUG SESSION COMPLETE: done
-      - If ABANDONED: note file location for later continue
-</process>
+   RESULT: FAILED
+   ---
+   INVESTIGATION INCONCLUSIVE
+   Hypothesis eliminated: [list eliminated causes]
+   Remaining candidates: [what wasn't tested yet]
+   ```
 
-<success_criteria>
-- [ ] Subcommands (list/status/continue) handled before agent spawn
-- [ ] New sessions create structured debug files
-- [ ] Symptoms gathered via AskUserQuestion
-- [ ] backbone-debugger agent spawned with proper context
-- [ ] Session state persists in backbone/debug/{slug}.md
-</success_criteria>
+5. **Update session file** after each step — state, hypotheses tested, results
+
+## Continue Flow (`continue <slug>`)
+
+1. Read `backbone/debug/{slug}.md` to restore full context
+2. Resume from last state in the scientific method
+3. If a checkpoint was pending, process checkpoint_response first
+4. Continue the loop
+
+## Cleanup
+
+After resolution, mark session as `state: resolved` and offer to archive:
+```
+RESULT: COMPLETE
+---
+Root cause: <summary>
+Fix: <summary>
+Session archived to backbone/artifacts/archive/debug/
+```

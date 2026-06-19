@@ -2,12 +2,12 @@
 ---
 framework: general
 name: spec-driven-development
-description: Keeps implementation and specs in sync. Use when working on a feature that has a PRD in backbone/prd/, when starting implementation of a documented feature, or when the user asks to verify implementation against a spec or update a spec after changes.
+description: Keeps implementation and specs in sync. Use when working on a feature that has a proposal in backbone/artifacts/changes/CHNG-XXX/proposal.md, when starting implementation of a documented feature, or when the user asks to verify implementation against a spec or update a spec after changes.
 ---
 
 # Spec-Driven Development
 
-Specs live in `backbone/prd/` (product requirements) and `backbone/planning/` (implementation blueprints). They are the source of truth for architectural decisions, API contracts, and implementation scope.
+Specs live in `backbone/artifacts/changes/CHNG-XXX/` with collocated proposal.md (product requirements), design.md (architecture), and tasks.md (implementation breakdown). They are the source of truth for architectural decisions, API contracts, and implementation scope.
 
 ## Core Loop
 
@@ -112,8 +112,8 @@ Execute tasks one at a time following `incremental-implementation` and `test-dri
 
 1. **Find the spec.** For feature `feature-name`:
    ```bash
-   ls backbone/prd/*feature-name*
-   ls backbone/planning/*feature-name*
+   ls backbone/artifacts/changes/CHNG-*/proposal.md
+   ls backbone/artifacts/changes/CHNG-*/tasks.md
    ```
 
 2. **Read the full spec.** Understand scope, decisions, API contracts, and open questions before writing code.

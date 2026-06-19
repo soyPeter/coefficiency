@@ -127,7 +127,8 @@ fi
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
 GIT_DIR=$(git rev-parse --git-dir 2>/dev/null || true)
 
-if [[ "$CURRENT_BRANCH" =~ ^(main|master|dev|develop)$ ]] && [[ "$GIT_DIR" != *"worktrees"* ]]; then
+SKIP_WORKTRUNK="${SKIP_WORKTRUNK:-${CLAUDE_CODE_SKIP_WORKTRUNK:-0}}"
+if [ "$SKIP_WORKTRUNK" != "1" ] && [[ "$CURRENT_BRANCH" =~ ^(main|master|dev|develop)$ ]] && [[ "$GIT_DIR" != *"worktrees"* ]]; then
     TASKS_FILE="$PROJECT_ROOT/backbone/3-TASKS.md"
     if [ -f "$TASKS_FILE" ]; then
         FIX_KEYWORDS="fix|bug|docs|update|refactor|clean|remove|chore|test|style|perf|ci|build|revert"
@@ -309,6 +310,54 @@ if [ -z "${SKIP_EARS_CHECK:-}" ] && [ -x "$PROJECT_ROOT/scripts/hooks/pre-commit
     fi
 fi
 
+# ── Gate 10: QMS Advisory (CAPA past-due check) ───────────────────────────
+# Warns if any CAPA is past due. Advisory only — does not block.
+
+if [ -z "${SKIP_QMS_CHECK:-}" ] && [ -x "$PROJECT_ROOT/scripts/hooks/pre-commit-qms.sh" ]; then
+    echo "🔍 Gate 10: QMS check..."
+    bash "$PROJECT_ROOT/scripts/hooks/pre-commit-qms.sh"
+fi
+
+# ── Gate 10a: QMS NCR→CAPA Pairing ─────────────────────────────────────
+# Warn if any open NCR has no corresponding CAPA (mandatory pairing)
+
+if [ -z "${SKIP_QMS_CHECK:-}" ]; then
+    NCR_DIR="$PROJECT_ROOT/backbone/artifacts/qms/ncr"
+    CAPA_DIR="$PROJECT_ROOT/backbone/artifacts/qms/capa"
+    if [ -d "$NCR_DIR" ]; then
+        for ncr_file in "$NCR_DIR"/NCR-*.yml; do
+            [ -f "$ncr_file" ] || continue
+            ncr_id=""
+            ncr_status=""
+            while IFS= read -r line; do
+                case "$line" in
+                    id:*) ncr_id="${line#id: }" ;;
+                    status:*) ncr_status="${line#status: }" ;;
+                esac
+            done < "$ncr_file"
+            ncr_id="${ncr_id//\"/}"
+            ncr_status="${ncr_status//\"/}"
+
+            if [ "$ncr_status" = "open" ]; then
+                has_capa=false
+                if [ -d "$CAPA_DIR" ]; then
+                    for capa_file in "$CAPA_DIR"/CAPA-*.yml; do
+                        [ -f "$capa_file" ] || continue
+                        if grep -q "$ncr_id" "$capa_file" 2>/dev/null; then
+                            has_capa=true
+                            break
+                        fi
+                    done
+                fi
+                if [ "$has_capa" = false ]; then
+                    echo -e "${YELLOW}⚠️  QMS: $ncr_id has no linked CAPA (mandatory pairing)${NC}"
+                    echo -e "${YELLOW}   Create one: ./scripts/qms-capa-create.sh --ncr $ncr_id${NC}"
+                fi
+            fi
+        done
+    fi
+fi
+
 # ── Gate 11: Task Completion Acceptance Criteria ────────────────────────────
 # Validate that newly-[x] tasks have acceptance criteria met
 
@@ -417,6 +466,84 @@ if [ -z "${SKIP_CONVENTIONS_CHECK:-}" ] && [ -x "$PROJECT_ROOT/scripts/hooks/pre
     if ! bash "$PROJECT_ROOT/scripts/hooks/pre-commit-conventions-check.sh" > /tmp/conventions-check.out 2>&1; then
         cat /tmp/conventions-check.out
         ERRORS=$((ERRORS + 1))
+    fi
+fi
+
+# ── Gate 19: Change Folder Validation (Gates X & Y) ──────────────────────
+# Validate proposal.md REQ-XXX format and tasks.md REQ traceability
+
+if [ -z "${SKIP_CHANGE_CHECK:-}" ] && [ -x "$PROJECT_ROOT/scripts/hooks/pre-change.sh" ]; then
+    echo "🔍 Gate 19: Checking change folder structure..."
+    if ! bash "$PROJECT_ROOT/scripts/hooks/pre-change.sh" > /tmp/change-check.out 2>&1; then
+        cat /tmp/change-check.out
+        ERRORS=$((ERRORS + 1))
+    fi
+fi
+
+# ── Gate 20: Regenerate Agent Context Artifacts ────────────────────────────
+# Auto-regenerate briefing.md, focus.md, and inbound.json when inputs are stale
+
+if [ -z "${SKIP_ARTIFACT_REGEN:-}" ]; then
+    echo "🔍 Gate 20: Checking agent context artifacts..."
+    
+    # Only run if backbone files were staged (indicating docs changed)
+    STAGED_BACKBONE=$(git diff --name-only --cached 2>/dev/null | grep -E '^backbone/' || true)
+    if [ -n "$STAGED_BACKBONE" ]; then
+        ARTIFACTS_CHANGED=0
+        
+        # briefing.md: regenerate if 3-TASKS.md, 4-KNOWLEDGE.md, 5-DECISIONS.md, or 9-AGENT-SKILLS.md changed
+        if echo "$STAGED_BACKBONE" | grep -qE 'backbone/(3-TASKS|4-KNOWLEDGE|5-DECISIONS|9-AGENT-SKILLS)\.md'; then
+            if [ -x "$PROJECT_ROOT/scripts/generate-briefing.sh" ]; then
+                bash "$PROJECT_ROOT/scripts/generate-briefing.sh" > /tmp/briefing-gen.out 2>&1
+                if git diff --quiet "backbone/briefing.md" 2>/dev/null; then
+                    : # No change
+                else
+                    git add "backbone/briefing.md"
+                    ARTIFACTS_CHANGED=1
+                fi
+            fi
+        fi
+        
+        # focus.md: regenerate if 3-TASKS.md changed
+        if echo "$STAGED_BACKBONE" | grep -qE 'backbone/3-TASKS\.md'; then
+            if [ -x "$PROJECT_ROOT/scripts/generate-focus.sh" ]; then
+                bash "$PROJECT_ROOT/scripts/generate-focus.sh" > /tmp/focus-gen.out 2>&1
+                if git diff --quiet "backbone/focus.md" 2>/dev/null; then
+                    : # No change
+                else
+                    git add "backbone/focus.md"
+                    ARTIFACTS_CHANGED=1
+                fi
+            fi
+        fi
+        
+        # inbound.json: regenerate if any .md or .sh files changed
+        if echo "$STAGED_BACKBONE" | grep -qE '\.(md|sh)$'; then
+            if [ -x "$PROJECT_ROOT/scripts/generate-inbound-index.sh" ]; then
+                bash "$PROJECT_ROOT/scripts/generate-inbound-index.sh" > /tmp/inbound-gen.out 2>&1
+                if git diff --quiet "backbone/index/inbound.json" 2>/dev/null; then
+                    : # No change
+                else
+                    git add "backbone/index/inbound.json"
+                    ARTIFACTS_CHANGED=1
+                fi
+            fi
+        fi
+        
+        if [ "$ARTIFACTS_CHANGED" -eq 1 ]; then
+            echo "  🔄 Regenerated agent context artifacts (briefing.md, focus.md, inbound.json)"
+        fi
+    fi
+fi
+
+# ── Gate 21: AC Test Coverage Gate ─────────────────────────────────────────
+# Warn if acceptance criteria in traceability YAML lack test references
+
+if [ -z "${SKIP_AC_CHECK:-}" ] && [ -x "$PROJECT_ROOT/scripts/verify-ac-tests.sh" ]; then
+    echo "🔍 Gate 21: Checking AC test coverage..."
+    if ! bash "$PROJECT_ROOT/scripts/verify-ac-tests.sh" > /tmp/ac-check.out 2>&1; then
+        cat /tmp/ac-check.out
+        WARNINGS=$((WARNINGS + 1))
     fi
 fi
 

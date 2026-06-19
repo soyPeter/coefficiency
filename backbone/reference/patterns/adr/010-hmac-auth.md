@@ -57,7 +57,7 @@ Chosen option: "HMAC-SHA256 with shared secret", because it provides strong cryp
 
 ## References
 
-* [Architecture Decision: JWT Validation](./0010-hmac-service-auth.md)
+* [Architecture Decision: HMAC Service Auth](./010-hmac-auth.md)
 * `services/libs/shared-security/` - JWT validation and signature verification
 * `documentation/SECURITY.md` - Comprehensive security guide
 * HMAC-SHA256 standard: RFC 2104

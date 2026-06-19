@@ -28,14 +28,14 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 ERRORS=0
 WARNINGS=0
 
-# Get staged PRD files
-STAGED_PRDS=$(git diff --cached --name-only 2>/dev/null | grep '^backbone/prd/.*\.md$' || true)
+# Get staged PRD or proposal files
+STAGED_PRDS=$(git diff --cached --name-only 2>/dev/null | grep -E '^backbone/artifacts/prd/.*\.md$|^backbone/artifacts/changes/.*/proposal\.md$' || true)
 
 if [ -z "$STAGED_PRDS" ]; then
     exit 0
 fi
 
-echo "🔍 Gate R→D+: Validating EARS syntax in PRDs..."
+echo "🔍 Gate R→D+: Validating EARS syntax in proposals..."
 
 # EARS pattern regex (case-insensitive)
 # Matches: WHEN ... THEN ... SHALL / IF ... THEN ... SHALL / ... SHALL / WHILE ... SHALL / IF ... MAY
@@ -72,7 +72,7 @@ for prd in $STAGED_PRDS; do
         [[ "$line" =~ ^[[:space:]]*[-*] ]] || continue
         
         # Check for REQ- ID
-        req_id=$(echo "$line" | grep -oE 'REQ-[A-Z]+-[0-9]+' | head -1 || true)
+        req_id=$(echo "$line" | grep -oE 'REQ-[A-Z0-9]+-[0-9]+' | head -1 || true)
         
         if [ -z "$req_id" ]; then
             echo -e "    ${RED}❌ Requirement missing REQ- ID: $line${NC}"
@@ -81,7 +81,7 @@ for prd in $STAGED_PRDS; do
         fi
         
         # Check REQ- ID format
-        if ! echo "$req_id" | grep -qE '^REQ-[A-Z]+-[0-9]+$'; then
+        if ! echo "$req_id" | grep -qE '^REQ-[A-Z0-9]+-[0-9]+$'; then
             echo -e "    ${RED}❌ Invalid REQ- ID format: $req_id${NC}"
             ERRORS=$((ERRORS + 1))
             continue

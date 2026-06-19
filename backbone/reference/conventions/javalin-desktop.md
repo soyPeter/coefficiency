@@ -351,6 +351,6 @@ mvn package jpackage:jpackage
 
 - `conventions-general.md` - Core principles
 - `java.md` - Java patterns and SOLID
-- `backbone/4-KNOWLEDGE.md` - Tech stack, NEVER DO list
+- [`backbone/4-KNOWLEDGE.md`](backbone/4-KNOWLEDGE.md) - Tech stack, NEVER DO list
 
 *Last updated: 2026-05-13*

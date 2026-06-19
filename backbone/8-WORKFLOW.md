@@ -1,4 +1,5 @@
-<!-- VERSION: 2026.04.29 -->
+<!-- VERSION: 2026.05.29 -->
+<!-- PURPOSE: Agent execution checklist, review gates, Definition of Done -->
 # 8. AI Agent Execution Workflow
 
 *Standard operating procedure for AI agents when working on projects using this backbone.*
@@ -8,7 +9,7 @@
 Before making changes, the agent MUST:
 
 1. **Read `4-KNOWLEDGE.md`** to understand the tech stack and project constraints.
-2. **Read `backbone/reference/conventions/jooby.md`** to understand framework-specific syntax mappings.
+2. **Read `backbone/reference/conventions/<framework>.md`** to understand framework-specific syntax mappings.
    - *The framework name is defined in 4-KNOWLEDGE.md (e.g., quarkus-conventions.md, springboot-conventions.md)*
 3. **Grill before PRD** — For feature work, use the `grill-me` skill to stress-test requirements before writing the PRD.
    - Load: `view backbone/skills/general/grill-me/SKILL.md`
@@ -18,13 +19,67 @@ Before making changes, the agent MUST:
 5. **Read `3-TASKS.md`** to identify the current objective.
    - Ensure [WIP] tasks follow granularity rules: size tag [XS/S/M/L], concrete WHAT+WHERE, no scope bloat.
 6. **Acknowledge Required Skills** for the task/workspace.
-7. **(Optional) Context7 Live Docs** — This project has Context7 configured as an MCP server for up-to-date library documentation. When writing code that uses framework or library APIs, use `resolve-library-id` + `query-docs` to verify current API signatures and prevent hallucinated calls. Requires `CONTEXT7_API_KEY` — see `backbone/4-KNOWLEDGE.md` for setup.
+7. **Worktree decision** — Evaluate whether to create a worktree:
+
+   | Worktree? | Criteria | Agent Action |
+   |-----------|----------|--------------|
+   | **Mandatory** | `[WIP]` feature task, Level 1 change (domain model, API contracts, shared libs), changes to `services/libs/shared-*` | Auto-create or prompt user. Blocks commit on `dev`/`main` via Gate 4. |
+   | **Recommended** | Multi-session task, 5+ files affected, high-risk refactor, cross-cutting change | Proactively recommend: "This touches N files across M layers — want a worktree?" |
+   | **Optional** | `fix`/`docs`/`refactor`/`chore`/`test`/`perf`, single-session quick edits, exploratory spikes | Work on current branch is fine. |
+
+   **Agents must proactively flag Level 1 worktree needs** — don't wait for the user to ask. The AI Cascade Effect means a wrong foundation change on `dev` poisons the entire branch.
+8. **(Optional) Context7 Live Docs** — This project has Context7 configured as an MCP server for up-to-date library documentation. When writing code that uses framework or library APIs, use `resolve-library-id` + `query-docs` to verify current API signatures and prevent hallucinated calls. Requires `CONTEXT7_API_KEY` — see [`backbone/4-KNOWLEDGE.md`](backbone/4-KNOWLEDGE.md) for setup.
+
+## Quality Management (QMS)
+
+When you discover a defect, design flaw, or nonconformance during implementation, **automatically register an NCR** — no user prompting needed.
+
+```bash
+# Register linked to the active change folder
+./scripts/qms-register-issue.sh \
+  --title "Brief description of the issue" \
+  --severity major \
+  --category code \
+  --change CHNG-XXX
+
+# Or use the slash command (Claude Code):
+# /backbone:qms
+```
+
+**NCR→CAPA pairing (mandatory):**
+Every NCR **must** have a corresponding CAPA (Corrective and Preventive Action). This is not optional. When you register an NCR:
+1. `scripts/qms-register-issue.sh` auto-creates a CAPA with the NCR ID as reference
+2. The CAPA records the root cause, action plan, owner, and due date
+3. You must update the CAPA with actual root cause and action plan after investigation
+4. Close the CAPA when the corrective action is complete
+
+**Why mandatory pairing?**
+- An NCR without a CAPA is a complaint without a fix plan — it doesn't drive improvement
+- CAPA forces root cause analysis before jumping to a fix
+- The pairing enables trend analysis (which areas produce NCRs without closed CAPAs)
+- Pre-commit Gate 10a warns if any open NCR lacks a linked CAPA
+
+```bash
+# NCR → CAPA is automatic, but you should update with details:
+./scripts/qms-capa-close.sh --capa CAPA-XXX --verification "Fix verified: added validation, tests pass"
+```
+
+**Mechanical enforcement (automatic — no agent action needed):**
+- **NCR registration auto-generates CAPA** — `qms-register-issue.sh` calls `qms-capa-create.sh` automatically
+- Pre-tool-use QMS hook: warns about open NCRs when editing change folder files
+- Post-tool-use auto-register: suggests NCR when a test/build command fails
+- Pre-commit Gate 10: warns on `fix:` commits without linked NCRs
+- Pre-commit Gate 10a: warns if any open NCR has no linked CAPA
+- Archive Gate Z4: **blocks** archiving a change with open linked NCRs (`--force` to skip)
+- Pre-release hook: **blocks** release if critical NCRs open without CAPA
+
+**After archiving:** If NCRs were linked, `lessons-learned.md` is auto-generated in the archive folder. Fill in root cause, corrective actions, and prevention.
 
 ## Review Gates (Blocking)
 
 Review gates enforce quality checkpoints between SDD phases. The `review-gate-check.sh` hook blocks Write/Edit when gates are not satisfied.
 
-### Gate G→P: Grilling → PRD
+### Gate G→P: Grilling → PRD (Full: Blocking / Light: Advisory)
 
 Before creating a PRD for feature work:
 - [ ] Agent has used the `grill-me` skill to stress-test requirements
@@ -35,10 +90,10 @@ Before creating a PRD for feature work:
 
 **Exemptions:** Fix, bug, docs, refactor, chore, test tasks skip grilling.
 
-### Gate R→D: Requirements → Design
+### Gate R→D: Requirements → Design (Full/Standard: Blocking / Light: Advisory)
 
 Before creating a design document:
-- [ ] PRD exists in `backbone/prd/`
+- [ ] proposal.md exists in `backbone/artifacts/changes/CHNG-XXX/`
 - [ ] PRD has `grilled: true` in frontmatter (feature work only)
 - [ ] Requirements are in EARS format with unique IDs
 - [ ] Acceptance criteria are defined for each requirement
@@ -46,10 +101,10 @@ Before creating a design document:
 
 **Failure:** Agent attempts to write design doc without approved PRD → blocked with instructions to create PRD first.
 
-### Gate D→I: Design → Implementation
+### Gate D→I: Design → Implementation (Full/Standard: Blocking / Light: Advisory)
 
 Before writing implementation code:
-- [ ] Design doc exists in `backbone/design/`
+- [ ] design.md exists in `backbone/artifacts/changes/CHNG-XXX/`
 - [ ] C4 model covers Context, Container, and Component levels
 - [ ] ADRs document all significant architectural decisions
 - [ ] API contracts define request/response schemas
@@ -60,10 +115,10 @@ Before writing implementation code:
 
 **Exemptions:** Fix, docs, refactor, chore, test tasks do not require design docs.
 
-### Gate P→T: Planning → Tasks
+### Gate P→T: Planning → Tasks (Full: Blocking / Light: Advisory)
 
 Before marking tasks as [WIP] in `3-TASKS.md`:
-- [ ] Planning doc exists in `backbone/planning/` for the referenced PRD
+- [ ] tasks.md exists in `backbone/artifacts/changes/CHNG-XXX/` for the referenced changes
 - [ ] Each task has a size tag: [XS], [S], [M], or [L] (XL is forbidden)
 - [ ] Task describes concrete WHAT + WHERE (specific class/endpoint/file)
 - [ ] Task uses concrete verbs: add, fix, remove, configure, validate, create, update, extract, refactor
@@ -85,6 +140,13 @@ Before marking implementation complete:
 - [ ] Build and tests pass
 
 **Failure:** Task marked complete but traceability gaps exist → blocked with gap report.
+
+**Mode affects gate behavior:**
+- **Full mode:** All gates are blocking — cannot proceed without satisfying the gate
+- **Standard mode:** Gates are blocking for feature work, advisory for fix/chore/docs
+- **Light mode:** All gates are advisory (warn only) — useful for quick iterations
+
+Override per-command with `--light` or `--deep` flags.
 
 ## Skill Enforcement
 
@@ -184,16 +246,17 @@ A task is not complete until:
 
 1. **Skill acknowledged** — Required skill for the layer has been acknowledged
 2. **Security validated** — No prompt injection patterns, no secrets in code
-3. **Success criteria defined** — The task was transformed into verifiable goals before coding (Backbone Principle #4)
+3. **QMS: defects registered** — If a defect or nonconformance was discovered, an NCR was registered via `/backbone:qms` or `./scripts/qms-register-issue.sh`
+4. **Success criteria defined** — The task was transformed into verifiable goals before coding (Backbone Principle #4)
 4. The code adheres to the project's architectural boundaries
 5. **English naming** — All identifiers (classes, methods, variables, constants, files, packages, tables, endpoints) are in English only. No mixed-language identifiers.
 6. Required tests are written using the project's testing standards
 7. If it touches the DB/persistence layer, integration tests are written (if applicable)
 8. The project compiles/passes build checks successfully
 8. **Live Documentation Updated:**
-   - [ ] Decisions: Added to `backbone/5-DECISIONS.md` (if applicable)
-   - [ ] Memory: If lesson learned, add to `backbone/6-MEMORY.md` (if applicable)
-   - [ ] Active Tasks: `backbone/3-TASKS.md` updated with [WIP] before, [x] after
+   - [ ] Decisions: Added to [`backbone/5-DECISIONS.md`](backbone/5-DECISIONS.md) (if applicable)
+   - [ ] Memory: If lesson learned, add to [`backbone/6-MEMORY.md`](backbone/6-MEMORY.md) (if applicable)
+   - [ ] Active Tasks: [`backbone/3-TASKS.md`](backbone/3-TASKS.md) updated with [WIP] before, [x] after
 9. **Project Commit Process:**
     - After all verification passes, follow the project's commit process
     - Create a commit using the project's commit format

@@ -19,7 +19,7 @@ Extends `grill-me` with documentation discipline. While grilling the user about 
 ## Prerequisites
 
 - The project should have (or will create) a `backbone/CONTEXT.md`
-- ADR directory lives at `backbone/decisions/` (backbone convention) or `docs/adr/`
+- ADR directory lives at `backbone/reference/patterns/adr/` (backbone convention) or `docs/adr/`
 
 ## How It Works
 
@@ -81,7 +81,7 @@ When the user states how something works, check whether the code agrees:
 
 When a term is resolved, update `CONTEXT.md` **right there**. Don't batch — capture as they happen.
 
-Use the format in [backbone/knowledge/CONTEXT-FORMAT.md](../../knowledge/CONTEXT-FORMAT.md).
+Use the format in [backbone/knowledge/CONTEXT-FORMAT.md](../../../knowledge/CONTEXT-FORMAT.md).
 
 **Rules for CONTEXT.md entries:**
 - Only include domain-specific terms, not general programming concepts
@@ -98,9 +98,9 @@ Only offer to create an ADR when **all three** are true:
 2. **Surprising without context** — a future reader will wonder "why?"
 3. **Result of a real trade-off** — genuine alternatives, specific reasons for the choice
 
-If any is missing, skip the ADR. Use the format in [backbone/knowledge/ADR-FORMAT.md](../../knowledge/ADR-FORMAT.md).
+If any is missing, skip the ADR. Use the format in [backbone/knowledge/ADR-FORMAT.md](../../../knowledge/ADR-FORMAT.md).
 
-**Backbone convention:** ADRs live in `backbone/decisions/` (not `docs/adr/`), using sequential numbering: `0001-slug.md`.
+**Backbone convention:** ADRs live in `backbone/reference/patterns/adr/` (not `docs/adr/`), using sequential numbering: `NNN-slug.md`.
 
 ## Integration with Backbone Workflow
 
@@ -134,7 +134,7 @@ Agent: "So we've decided: Credits are standalone from Invoices
 
 User: "Yes"
 
-Agent: [creates backbone/decisions/0003-credits-standalone.md]
+Agent: [creates backbone/reference/patterns/adr/003-credits-standalone.md]
 ```
 
 ## Anti-patterns

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#<!-- VERSION: 2026.04.25 -->
+#<!-- VERSION: 2026.05.29 -->
 # PreToolUse Read-Before-Edit Guard
 # Trigger: PreToolUse on Write/Edit targeting existing files
 # Behavior: Blocks edit if file exists but was not read in current session

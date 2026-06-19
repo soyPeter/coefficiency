@@ -34,6 +34,12 @@ if [ "${CLAUDE_CODE_SKIP_CONVENTIONS:-0}" = "1" ]; then
     exit 0
 fi
 
+# ---- Light mode bypass ----
+if [ -f "backbone/.MODE" ]; then
+    MODE=$(tr -d '[:space:]' < "backbone/.MODE" 2>/dev/null || echo "standard")
+    [ "$MODE" = "light" ] && echo "  🟢 LIGHT MODE: Advisory only — conventions check skipped." && exit 0
+fi
+
 # Read stdin JSON from Claude Code
 INPUT=$(cat)
 [ -z "$INPUT" ] && exit 0

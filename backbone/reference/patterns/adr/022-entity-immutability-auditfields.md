@@ -437,9 +437,9 @@ See these files for working implementations:
 
 ## References
 
-- **ADR-0003**: [Java Records over Lombok](./0003-java-records-over-lombok.md) - Foundation for immutability
-- **ADR-0001**: [Hexagonal Architecture](./0001-hexagonal-architecture.md) - Domain layer independence
-- **ADR-0008**: [JSR-330 Framework Independence](./0008-jsr330-framework-independence.md) - Framework-agnostic design
+- **ADR-0003**: [Java Records over Lombok](./003-java-records.md) - Foundation for immutability
+- **ADR-0001**: [Hexagonal Architecture](./001-hexagonal-architecture.md) - Domain layer independence
+- **ADR-0008**: [JSR-330 Framework Independence](./008-jsr330.md) - Framework-agnostic design
 - **Project Guidelines**: `documentation/developer/GUIDELINES.md` - DDD principles
 - **Entity Pattern**: `documentation/developer/CREATE_NEW_SERVICE.md` Step 1.1 - Domain modeling
 

@@ -84,7 +84,7 @@ cd ../my-project-payment-feature
 **Option 2: Update the task to use an escape-hatch keyword**
 
 If your work is actually a fix, refactor, or docs update, change the task in
-`backbone/3-TASKS.md`:
+[`backbone/3-TASKS.md`](backbone/3-TASKS.md):
 
 ```markdown
 # Instead of:

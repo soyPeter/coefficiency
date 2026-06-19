@@ -18,7 +18,7 @@ Surface architectural friction and propose **deepening opportunities** — refac
 
 ## Glossary
 
-Use these terms exactly. Consistent language is the whole point. Full definitions in [backbone/knowledge/LANGUAGE.md](../../knowledge/LANGUAGE.md).
+Use these terms exactly. Consistent language is the whole point. Full definitions in [backbone/knowledge/LANGUAGE.md](../../../knowledge/LANGUAGE.md).
 
 | Term | Meaning | Avoid |
 |------|---------|-------|
@@ -74,7 +74,7 @@ Once the user picks a candidate, drop into a grilling conversation (`grill-me` /
 - What sits behind the seam, what tests survive
 - Update `CONTEXT.md` inline for new terms
 - Offer ADRs for load-bearing rejections
-- Explore alternative interfaces with [backbone/knowledge/INTERFACE-DESIGN.md](../../knowledge/INTERFACE-DESIGN.md)
+- Explore alternative interfaces with [backbone/knowledge/INTERFACE-DESIGN.md](../../../knowledge/INTERFACE-DESIGN.md)
 
 ## Example Output
 

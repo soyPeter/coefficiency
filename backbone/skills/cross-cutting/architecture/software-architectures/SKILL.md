@@ -88,7 +88,7 @@ Reference guide for the 20 architectures every Java developer should know, mappe
 - Systems with multiple adapters (REST + Kafka + DB)
 - Strong domain isolation required
 
-**Backbone default:** YES — this is the backbone's default architecture. See `backbone/4-KNOWLEDGE.md`.
+**Backbone default:** YES — this is the backbone's default architecture. See [`backbone/4-KNOWLEDGE.md`](backbone/4-KNOWLEDGE.md).
 
 **Key rule:** Dependencies point inward. Adapters → Application → Domain.
 

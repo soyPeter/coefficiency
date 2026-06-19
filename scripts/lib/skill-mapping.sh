@@ -21,7 +21,7 @@ get_skill_for_file() {
     
     # Detect framework from 4-KNOWLEDGE.md if not set
     if [ -z "$framework" ] && [ -f "backbone/4-KNOWLEDGE.md" ]; then
-        framework=$(grep -oE 'quarkus|springboot|laravel|kotlin|golang|python' backbone/4-KNOWLEDGE.md | head -1 || true)
+        framework=$(grep -oE 'quarkus|spring.?boot|laravel|kotlin|golang|python' backbone/4-KNOWLEDGE.md | head -1 || true)
     fi
     
     case "$file" in
@@ -59,7 +59,7 @@ get_skill_for_file() {
             ;;
         
         # PRDs
-        backbone/prd/*)
+        backbone/artifacts/prd/*)
             echo "general/create-prd"
             return 0
             ;;
@@ -71,7 +71,7 @@ get_skill_for_file() {
             ;;
         
         # Planning docs
-        backbone/planning/*)
+        backbone/artifacts/planning/*)
             echo "general/planning-and-task-breakdown"
             return 0
             ;;
@@ -120,9 +120,20 @@ is_skill_acknowledged() {
     local commit_msg="${2:-}"
     local session_file=".backbone/session/skills.json"
     
-    # Check session file
+    # Check primary session file (.backbone/session/skills.json)
     if [ -f "$session_file" ]; then
         if grep -q "\"$skill\"" "$session_file" 2>/dev/null; then
+            return 0
+        fi
+    fi
+    
+    # Fallback: check Claude Code acknowledgment file
+    local claude_ack_file=".claude/skill-acknowledgments.json"
+    if [ -f "$claude_ack_file" ]; then
+        # Check both centralized and local path formats
+        local full_skill_path="backbone/skills/$skill/SKILL.md"
+        local centralized_path="$HOME/.backbone/skills/$skill/SKILL.md"
+        if grep -qE "\"skill_path\".*\"($full_skill_path|$centralized_path)\"" "$claude_ack_file" 2>/dev/null; then
             return 0
         fi
     fi
@@ -132,7 +143,6 @@ is_skill_acknowledged() {
         local skills_line
         skills_line=$(echo "$commit_msg" | grep -iE '^Skills:' | head -1 || true)
         if [ -n "$skills_line" ]; then
-            # Extract skill short names from line
             local short_name
             short_name=$(echo "$skill" | sed 's|.*/||')
             if echo "$skills_line" | grep -qi "$short_name"; then

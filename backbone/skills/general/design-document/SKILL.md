@@ -140,13 +140,13 @@ Link back to PRD requirements.
 2. **One Concern Per Section** — Each section answers one question.
 3. **Diagrams Over Paragraphs** — Use C4, sequence diagrams, or ER diagrams when possible.
 4. **Decision Rationale** — Every ADR explains WHY, not just WHAT.
-5. **Version Controlled** — Design docs live in `backbone/design/` and are versioned with code.
+5. **Version Controlled** — Design docs live in `backbone/artifacts/changes/CHNG-XXX/design.md` and are versioned with code.
 
 ## Storage Convention
 
-- **Location:** `backbone/design/<feature>-design.md`
-- **Index:** Add entry to `backbone/design/index.md`
-- **Task reference:** Link from `backbone/3-TASKS.md`:
+- **Location:** `backbone/artifacts/changes/CHNG-XXX/design.md`
+- **Index:** Link from the change folder (collocated with proposal.md and tasks.md)
+- **Task reference:** Link from [`backbone/3-TASKS.md`](backbone/3-TASKS.md):
   ```markdown
   - [ ] design: Auth system architecture (Design: backbone/design/auth-design.md)
   ```

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#<!-- VERSION: 2026.04.25 -->
+#<!-- VERSION: 2026.05.29 -->
 # PostToolUse Planning Boundary Check
 # Trigger: PostToolUse on Write/Edit to backbone/*.md files
 # Behavior: Advisory reminder to sync STATE.md when planning files change
@@ -54,7 +54,7 @@ filename=$(basename "$file_path")
 
 # Advisory output (does not block)
 cat <<EOF
-{"decision":"allow","reminder":"PLANNING BOUNDARY: '$filename' was modified. Ensure backbone/planning/STATE.md reflects this change. The auto-sync hook should handle this, but verify the update is accurate."}
+{"decision":"allow","reminder":"PLANNING BOUNDARY: '$filename' was modified. Ensure backbone/artifacts/changes/STATE.md reflects this change. The auto-sync hook should handle this, but verify the update is accurate."}
 EOF
 
 exit 0

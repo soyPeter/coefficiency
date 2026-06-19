@@ -6,7 +6,7 @@
 # Checks:
 # - backbone/decisions/*.md created → 5-DECISIONS.md updated?
 # - 5-DECISIONS.md updated → corresponding detail file exists?
-# - backbone/prd/*.md created → 1-PRD.md updated?
+# - backbone/artifacts/prd/*.md created → 1-PRD.md updated?
 # - 1-PRD.md updated → corresponding detail file exists?
 # - backbone/tasks/*.md created → 3-TASKS.md updated?
 # - 3-TASKS.md updated → corresponding detail file exists?
@@ -75,7 +75,7 @@ fi
 
 # ===== CHECK 2: PRD =====
 if [ -d "backbone/prd" ]; then
-    PRD_DETAILS=$(git diff --name-only 2>/dev/null | grep "backbone/prd/" || true)
+    PRD_DETAILS=$(git diff --name-only 2>/dev/null | grep "backbone/artifacts/prd/" || true)
     if [ -n "$PRD_DETAILS" ]; then
         if ! INDEX_MODIFIED "backbone/1-PRD.md"; then
             echo -e "${YELLOW}⚠️  PRD detail file(s) created but 1-PRD.md not updated:${NC}"

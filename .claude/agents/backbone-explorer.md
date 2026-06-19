@@ -37,6 +37,5 @@ Matches:
 - "Search for TODOs in the codebase"
 - "Map the structure of directory Z"
 
-## Leverage Existing Commands
-- For full codebase mapping and architecture overview, use `/backbone:map-codebase`
-- For quick project health overview, use `/backbone:health`
+## Parent Agent Guidance
+- This agent returns only search results. The parent agent decides what commands to run next.

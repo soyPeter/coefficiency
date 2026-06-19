@@ -193,7 +193,7 @@ class CustomerResourceTest {
 
 ## Related Documentation
 
-- **Patterns**: `backbone/reference/patterns.md` - CQRS, Outbox, Idempotency
+- **Patterns**: [`backbone/reference/patterns.md`](backbone/reference/patterns.md) - CQRS, Outbox, Idempotency
 - **Java Conventions**: `backbone/reference/java-conventions.md` - Coding standards
 - **Full Examples**: `docs/NEW/documentation/developer/CREATE_NEW_SERVICE.md`
 - **Architecture**: `docs/NEW/documentation/architecture/`

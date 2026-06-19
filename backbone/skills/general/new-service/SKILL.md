@@ -46,14 +46,14 @@ Before creating a service, confirm the architectural context:
 
 **Default:** The generator creates hexagonal architecture services. This is the right default for 80% of cases.
 
-For full architecture guidance, see `backbone/skills/cross-cutting/architecture/software-architectures/SKILL.md`.
+For full architecture guidance, see [`backbone/skills/cross-cutting/architecture/software-architectures/SKILL.md`](backbone/skills/cross-cutting/architecture/software-architectures/SKILL.md).
 
 ## Decision Checklist
 
 Before running, confirm with the user:
 1. **Service name** — lowercase alphanumeric, e.g. `order`, `payment`, `inventory`
 2. **Entity name** — PascalCase, e.g. `Order`, `Payment` (defaults to capitalized service name)
-3. **Framework** — `quarkus` (hexagonal, Java, JDBI), `quarkus-kotlin-panache` (Kotlin, Panache, Maven), or `springboot` (check `backbone/4-KNOWLEDGE.md`)
+3. **Framework** — `quarkus` (hexagonal, Java, JDBI), `quarkus-kotlin-panache` (Kotlin, Panache, Maven), or `springboot` (check [`backbone/4-KNOWLEDGE.md`](backbone/4-KNOWLEDGE.md))
 4. **Package** — check existing services for the org's base package
 5. **Table name** — check for irregular plurals: `category` → `categories`, not `categorys`
 6. **Architecture fit** — does hexagonal (default) match the use case? (see Architecture Selection above)

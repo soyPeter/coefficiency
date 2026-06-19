@@ -97,7 +97,7 @@ Use when you have limited context and need to gather requirements from the user.
 
 5. **Use Accessible Language**: Write for a primary school graduate. Avoid jargon.
 
-6. **Save the Output**: Save as `backbone/prd/YYYY-MM-DD-<feature-name>.md`
+6. **Save the Output**: Save as `backbone/artifacts/changes/CHNG-XXX/proposal.md`
 
 ### Mode B: Synthesized PRD (Context-Based)
 
@@ -153,7 +153,7 @@ What this PRD explicitly does NOT cover.
 Any additional context.
 ```
 
-4. **Publish** the PRD to `backbone/prd/` and reference it from `backbone/3-TASKS.md`.
+4. **Publish** the proposal to `backbone/artifacts/changes/CHNG-XXX/proposal.md` and reference it from [[`backbone/3-TASKS.md`](backbone/3-TASKS.md)](backbone/3-TASKS.md).
 
 ## PRD Template with Grilling Section
 
@@ -239,7 +239,7 @@ Any additional context.
 
 ## PRD Storage Convention
 
-- **Location:** `backbone/prd/YYYY-MM-DD-<feature-name>.md`
+- **Location:** `backbone/artifacts/changes/CHNG-XXX/proposal.md`
 - **Frontmatter (required for feature PRDs):**
   ```markdown
   ---
@@ -247,10 +247,10 @@ Any additional context.
   ---
   ```
 - **Grilling section (required for feature PRDs):** `## Grilling` with all 5 branches
-- **Index:** Add entry to `backbone/prd/index.md`
+- **Index:** Add entry to [`backbone/1-PRD.md`](backbone/1-PRD.md) (or link from change folder)
 - **Task reference:** Link from `backbone/3-TASKS.md`:
   ```markdown
-  - [ ] [S] feat: Add OAuth login (PRD: backbone/prd/20260424-oauth.md)
+   - [ ] [S] feat: Add OAuth login (PRD: backbone/artifacts/changes/archive/prd/20260424-oauth.md)
   ```
 
 ## Notes

@@ -367,15 +367,15 @@ readinessChecks:
 
 ## Adding a New Resource Type
 
-1. **Define the XRD** in `backbone/skeleton-fragments/crossplane/engine/`
+1. **Define the XRD** in `backbone/artifacts/skeleton-fragments/crossplane/engine/`
 2. **Create a Composition** for each cloud provider (AWS, Azure, GCP)
-3. **Create a claim template** in `backbone/skeleton-fragments/crossplane/claims/`
+3. **Create a claim template** in `backbone/artifacts/skeleton-fragments/crossplane/claims/`
 4. **Update the generator** (`init-project.sh`) to support `--with-<resource>` flag
 5. **Update this skill** with the new resource pattern
 
 ## Generator Integration
 
-When a project requests infrastructure, the generator injects claims from `backbone/skeleton-fragments/crossplane/claims/` into the project's `k8s/claims/` directory. The Kustomize overlay at `k8s/kustomization.yaml` references `./claims` to include them in the GitOps pipeline.
+When a project requests infrastructure, the generator injects claims from `backbone/artifacts/skeleton-fragments/crossplane/claims/` into the project's `k8s/claims/` directory. The Kustomize overlay at `k8s/kustomization.yaml` references `./claims` to include them in the GitOps pipeline.
 
 ## Dependency Ordering
 

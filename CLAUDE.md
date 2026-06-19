@@ -1,4 +1,5 @@
-<!-- VERSION: 2026.04.30 -->
+<!-- VERSION: 2026.06.13#ImprovebackbonecommandswithGSDpatterns+decisions+memory+compact(CHNG-038) -->
+<!-- PURPOSE: Claude Code settings, hook bindings, agent definitions -->
 # Claude Code Configuration for Your Project
 
 > AI-powered development workspace configuration
@@ -46,6 +47,20 @@ To use a skill, load it first, then invoke with natural language:
 ### 🔴 Framework-Specific Skills
 Your project may have framework-specific skills. Check `backbone/skills/` after initialization.
 
+## Available Slash Commands
+
+This project ships **13 `/backbone:*` slash commands** for AI-assisted workflows. Type `/backbone:<command>` at the prompt:
+
+```
+Feature pipeline:  → design → task (xN) → close → close --ship
+                   → design --plan (lightweight)
+                   → design --amend CHNG-XXX (delta)
+Utilities:         review, review --depth quick, review --depth deep, debug, status, help
+Admin:             decide, map, qms, cost, sync, push-clean
+```
+
+Full reference: `COMMANDS.md` at project root. Command files: `.claude/commands/backbone/`.
+
 ### 🟢 Always Available Skills (Auto-Copied)
 These are installed automatically on every project init:
 
@@ -63,7 +78,7 @@ Skills from [skills.sh](https://skills.sh) auto-detected from tech stack.
 
 ## Project Setup (First Time)
 
-1. **Read the documentation roadmap** in `backbone/0-START-HERE.md`
+1. **Read the documentation roadmap** in [[`backbone/0-START-HERE.md`](backbone/0-START-HERE.md)](backbone/0-START-HERE.md)
     - Explains the dependency hierarchy of all backbone docs
     - Provides reading checklist for developers vs agents
 
@@ -79,7 +94,7 @@ Skills from [skills.sh](https://skills.sh) auto-detected from tech stack.
    This installs validation hooks that check:
     - Framework annotation contamination (blocks commit)
     - Domain layer framework leakage (blocks commit)
-    - WIP tasks still open in `backbone/3-TASKS.md` (warning)
+    - WIP tasks still open in [[`backbone/3-TASKS.md`](backbone/3-TASKS.md)](backbone/3-TASKS.md) (warning)
     - Project compilation (blocks commit, skip with `SKIP_BUILD=1`)
 
    **Claude Code hooks** (`.claude/settings.json`) run automatically during AI sessions
@@ -88,10 +103,11 @@ Skills from [skills.sh](https://skills.sh) auto-detected from tech stack.
 
 Agents MUST read these documents in order before making changes:
 
-1. **`backbone/4-KNOWLEDGE.md`** — Understand tech stack, constraints, build commands
-2. **`backbone/reference/conventions/<framework>.md`** — Learn framework-specific mappings (if applicable)
-3. **`backbone/8-WORKFLOW.md`** — Understand Definition of Done requirements
-4. **`backbone/3-TASKS.md`** — Identify current work objective and WIP status
+1. **`COMMANDS.md`** — Available `/backbone:*` slash commands for the feature pipeline
+2. **[`backbone/4-KNOWLEDGE.md`](backbone/4-KNOWLEDGE.md)** — Understand tech stack, constraints, build commands
+3. **`backbone/reference/conventions/java.md`** — Learn framework-specific mappings (if applicable)
+4. **[`backbone/8-WORKFLOW.md`](backbone/8-WORKFLOW.md)** — Understand Definition of Done requirements
+5. **`backbone/3-TASKS.md`** — Identify current work objective and WIP status
 
 **Full documentation roadmap:** See `backbone/0-START-HERE.md` for complete context.
 
@@ -117,13 +133,17 @@ view backbone/0-START-HERE.md
 claude code .
 
 # 2. Pre-session: Agent checklist
+# Read: COMMANDS.md (slash commands)
 # Read: backbone/4-KNOWLEDGE.md
-# Read: backbone/reference/conventions/<framework>.md
+# Read: backbone/reference/conventions/java.md
 # Read: backbone/8-WORKFLOW.md
 # Check: backbone/3-TASKS.md for current work
 
-# 3. Work on feature/fix
-# ... make code changes ...
+# 3. Start a feature (first time)
+/backbone:design <name>
+
+# 4. Implement tasks
+/backbone:task
 
 # 4. Add tests
 > view backbone/skills/general/test-quality/SKILL.md
@@ -211,4 +231,4 @@ To optimize token usage:
 - Commit guidelines
 - Issue management SLAs
 
-**Last updated**: [Update after project initialization]
+**Last updated**: 2026-06-16

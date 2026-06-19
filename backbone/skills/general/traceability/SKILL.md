@@ -19,13 +19,13 @@ Maintain a bidirectional mapping between requirements, design documents, code, a
 
 ## Format
 
-Per-feature YAML files in `storage/traceability/`:
+Per-feature YAML files in `backbone/artifacts/traceability/`:
 
 ```yaml
-# storage/traceability/<feature>.yml
+# backbone/artifacts/traceability/<feature>.yml
 feature: "user-authentication"
-prd: "backbone/prd/2026-05-01-auth.md"
-design: "backbone/design/auth-design.md"
+prd: "backbone/artifacts/changes/CHNG-001/proposal.md"
+design: "backbone/artifacts/changes/CHNG-001/design.md"
 
 requirements:
   REQ-AUTH-001:
@@ -62,7 +62,7 @@ Run `scripts/verify-traceability.sh` before commit:
 
 ```bash
 # Check specific feature
-./scripts/verify-traceability.sh storage/traceability/auth.yml
+./scripts/verify-traceability.sh backbone/artifacts/traceability/auth.yml
 
 # Check all features
 ./scripts/verify-traceability.sh
@@ -92,9 +92,9 @@ Checks:
 
 ## Storage Convention
 
-- **Location:** `storage/traceability/<feature>.yml`
-- **Index:** Add entry to `storage/traceability/index.yml`
-- **Task reference:** Link from `backbone/3-TASKS.md`:
+- **Location:** `backbone/artifacts/traceability/<feature>.yml`
+- **Index:** Add entry to `backbone/artifacts/traceability/index.yml`
+- **Task reference:** Link from [`backbone/3-TASKS.md`](backbone/3-TASKS.md):
   ```markdown
-  - [ ] trace: Auth traceability matrix (Traceability: storage/traceability/auth.yml)
+  - [ ] trace: Auth traceability matrix (Traceability: backbone/artifacts/traceability/auth.yml)
   ```

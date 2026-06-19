@@ -29,8 +29,11 @@ if [ "${SKIP_GRILL_CHECK:-0}" = "1" ]; then
     exit 0
 fi
 
-# Get staged PRD files
-STAGED_PRDS=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null | grep -E '^backbone/prd/.*\.md$' || true)
+# Get staged PRD or proposal files
+STAGED_PRDS=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null | grep -E '^backbone/artifacts/changes/.*/proposal\.md$' | grep -v '^backbone/artifacts/changes/archive/' || true)
+if [ -z "$STAGED_PRDS" ]; then
+    STAGED_PRDS=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null | grep -E '^backbone/artifacts/prd/.*\.md$' || true)
+fi
 
 if [ -z "$STAGED_PRDS" ]; then
     exit 0

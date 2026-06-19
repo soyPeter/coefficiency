@@ -2,7 +2,7 @@
 ---
 framework: general
 name: code-simplification
-description: Simplifies code for clarity without changing behavior. Use when code works but is harder to read, maintain, or extend than it should be.
+description: Simplifies code for clarity without changing behavior, with both manual and automated modes. Use when code works but is harder to read, maintain, or extend than it should be, or when reviewing a diff for cleanup opportunities.
 ---
 
 # Code Simplification
@@ -113,6 +113,34 @@ Compare before and after:
 - [ ] Simplified code follows project conventions
 - [ ] No error handling removed or weakened
 - [ ] No dead code left behind
+
+## Phase 2 — Automated (Diff Review)
+
+When reviewing a diff (after changes), use the automated parallel-agent pattern instead of manual analysis.
+
+### How Automated Mode Works
+
+Launch 4 independent review agents via the Task tool, all in a single message so they run concurrently. Pass each agent the diff and one of the four angles below. Each returns its findings with `file`, `line`, a one-line `summary`, and the concrete cost (what is duplicated, wasted, or harder to maintain).
+
+### Angle 1 — Reuse
+
+Look for copy-pasted blocks that should be unified, missed abstractions (existing helper ought to be used but isn't), and repeated conditionals or expressions that signal a missing variable or function. Focus on what the author could have reused but didn't.
+
+### Angle 2 — Simplification
+
+Look for unnecessarily complex constructs: deep nesting that guard clauses or early returns would flatten, ternaries chained beyond two terms, boolean parameter flags that force reader to check the call site, over-abstracted indirection (factory-for-a-factory), and dead or unreachable code.
+
+### Angle 3 — Efficiency
+
+Look for wasted work: recomputing the same value in a loop, re-parsing or re-fetching data already available, N+1 query patterns, redundant sorting or filtering, and unnecessary allocations or copies in hot paths.
+
+### Angle 4 — Altitude
+
+Look for code in the wrong layer (business logic leaking into a controller, UI formatting in a service), misplaced responsibilities (a function doing two unrelated things), and files or functions that have outgrown their original purpose. Question whether each change belongs where it landed.
+
+### Apply Phase
+
+Wait for all four agents to complete, dedup findings that point at the same line or mechanism, and fix each remaining one directly. Skip any finding whose fix would change intended behavior, require changes well outside the reviewed diff, or that you judge to be a false positive — note the skip rather than arguing with it. Finish with a brief summary of what was fixed and what was skipped (or confirm the code was already clean).
 
 ## Red Flags
 

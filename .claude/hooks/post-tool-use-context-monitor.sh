@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#<!-- VERSION: 2026.05.03 -->
+#<!-- VERSION: 2026.05.29 -->
 # PostToolUse Context Monitor Hook
 # Trigger: PostToolUse after every tool call
 # Behavior: Tracks session tool usage and warns at thresholds
@@ -18,7 +18,7 @@ trap handle_error ERR
 
 # Session tracking file
 SESSION_TRACKER="/tmp/backbone-session-$(date +%Y%m%d).tracker"
-STATE_FILE="backbone/planning/STATE.md"
+STATE_FILE="backbone/artifacts/changes/STATE.md"
 
 # Initialize tracker if not exists
 if [ ! -f "$SESSION_TRACKER" ]; then
