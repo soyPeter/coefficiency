@@ -42,7 +42,8 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
 
   useEffect(() => {
     api<{ hasUser: boolean }>('/auth/status').then(r => {
-      setMode(r.hasUser ? 'login' : 'setup');
+      if (r.hasUser) { setMode('login'); return; }
+      window.location.hash = '#/setup';
     });
   }, []);
 
@@ -53,7 +54,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
       setError(intl.formatMessage({ id: 'auth.usernameRequired' }));
       return;
     }
-    if (password.length < 4) {
+    if (password.length < 8) {
       setError(intl.formatMessage({ id: 'auth.passwordRequired' }));
       return;
     }

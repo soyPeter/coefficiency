@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LogOut, ChevronFirst, Users, TrendingUp, Building, Upload, BookOpen, Settings } from 'lucide-react';
+import { LogOut, ChevronFirst, Users, TrendingUp, Building, Upload, BookOpen, Settings, BarChart3 } from 'lucide-react';
 import { useIntl } from 'react-intl';
 import { cn } from '@/lib/utils';
 import { useLayout } from './context';
@@ -14,6 +14,7 @@ const NAV = [
   { label: 'menu.consultants', path: '/consultants', icon: Users },
   { label: 'menu.billing', path: '/billing', icon: TrendingUp },
   { label: 'menu.clients', path: '/clients', icon: Building },
+  { label: 'menu.reports', path: '/reports', icon: BarChart3 },
   { label: 'menu.import', path: '/import', icon: Upload },
   { label: 'menu.config', path: '/config', icon: Settings },
   { label: 'menu.docs', path: '/docs', icon: BookOpen },

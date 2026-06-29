@@ -36,6 +36,7 @@ To use a skill, load it first, then invoke with natural language:
 |-------|-------------|
 | `api-contract-review` | Review REST API contracts for HTTP semantics, versioning, backward compatibility, and response consistency. |
 | `architecture-review` | Analyze project architecture at macro level - package structure, module boundaries, dependency direction, and layering. |
+| `caveman-compact` | Optional output compression — cuts ~65% tokens via `/backbone:compact-mode`. Useful in long sessions. |
 | `changelog-generator` | Generate changelogs from git commits. |
 | `clean-code` | Clean Code principles (DRY, KISS, YAGNI), naming conventions, function design, and refactoring. |
 | `concurrency-review` | Review concurrency code for thread safety, race conditions, deadlocks, and modern patterns. |
@@ -43,6 +44,7 @@ To use a skill, load it first, then invoke with natural language:
 | `git-commit` | Generate conventional commit messages. |
 | `issue-triage` | Triage and categorize GitHub issues with priority labels. |
 | `test-quality` | Write high quality tests with appropriate frameworks. |
+| `coding-standards` | Universal coding standards — includes Ponytail 5-rung YAGNI ladder (REQ-YAGNI-001). |
 
 ### 🔴 Framework-Specific Skills
 Your project may have framework-specific skills. Check `backbone/skills/` after initialization.

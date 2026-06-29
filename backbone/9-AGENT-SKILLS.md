@@ -104,6 +104,8 @@ The following slash commands are available in Claude Code. Use them by typing `/
 | `/backbone:map` | Generate architecture map | Onboarding, refactoring. Use `--reverse` for reverse-engineering existing code |
 | `/backbone:qms` | Quality management — register NCR, compact stale entries | Issue tracking. Disabled in Light mode |
 | `/backbone:compact` | Scan stale decisions and memory entries | Before feature close, periodic maintenance. Use `--dry-run` to preview |
+| `/backbone:compact-mode` | Toggle output compression (caveman-style) | When token budgets are tight — cuts ~65% tokens. Use `lite|full|ultra|off` |
+| `/backbone:handoff` | Compact conversation into handoff document for another agent | Mid-session handoff, context preservation |
 | `/backbone:cost` | Log heuristic cost estimate to SESSION.md | After significant work |
 | `/backbone:uat` | Conversational user acceptance testing | Post-implementation. Use `--resume` to continue interrupted session |
 | `/backbone:sync` | Sync skills from generator to project | After backbone updates |
@@ -131,7 +133,8 @@ The following slash commands are available in Claude Code. Use them by typing `/
 - Tags code with REQ-ID comments for traceability
 - Updates traceability matrix after every task
 - Always writes tests first (unless using `--quick`)
-- Flags: `--quick` (atomic, no TDD, commit directly), `--changelog <msg>`, `--parallel` (wave-based parallel execution), `--wave N` (execute single wave), `--interactive` (sequential with user checkpoints)
+- Flags: `--quick` (atomic, no TDD, commit directly), `--changelog <msg>`, `--parallel` (wave-based parallel execution), `--wave N` (execute single wave), `--interactive` (sequential with user checkpoints), `--compact` (enable caveman output compression ~65%)
+- Loop flags: `--loop <cadence>` for unattended automation (`30m`, `1h`, `nightly`, `pr`, `monitor`), `--goal <condition>` for objective stop condition checked by a separate verifier subagent (maker/checker split). Uses STATE.md in `.backbone/state/` that persists across runs. Hard stop at 10 iterations.
 - Mode-aware: light=skip TDD + skill loading, full=mandatory code review after
 
 **`/backbone:review`**
@@ -198,6 +201,17 @@ The following slash commands are available in Claude Code. Use them by typing `/
 - Creates checkpoint in `backbone/debug/{slug}.md`
 - Guides through hypothesis → experiment → validation
 
+**`/backbone:compact-mode`**
+- Toggle output compression for token savings
+- Levels: `lite` (~30%), `full` (~65%), `ultra` (~80%), `off`
+- Use when token budgets are tight during long sessions
+- Inspired by caveman (JuliusBrussee) and ponytail (DietrichGebert) skills
+
+**`/backbone:handoff`**
+- Compacts current conversation into a handoff document
+- Saves to `.backbone/handoff/<timestamp>.md` with decisions, WIP state, and remaining tasks
+- Another agent reads the handoff to continue seamlessly
+
 **`/backbone:cost`**
 - Logs heuristic cost estimate to SESSION.md
 - Tracks tokens, tool calls, files read for awareness
@@ -240,6 +254,10 @@ The following agents are available for specific tasks. They are configured in `.
 **`backbone-developer`**
 - Default agent with comprehensive backbone knowledge
 - Applies hexagonal architecture, framework conventions, worktrunk workflow
+- **YAGNI ladder (REQ-YAGNI-001):** Applies 5-rung Ponytail protocol before any code — need it? stdlib? native? dep? one line? minimum. Safety exclusions for validation/security/a11y.
+- **Self-review (REQ-SRV-001):** Checks own work before returning: YAGNI applied? Edge cases? Tests pass? No over-engineering?
+- **Progress ledger (REQ-HOFF-002):** Checks `.backbone/ledger/progress.md` after compaction. Never re-dispatches completed tasks.
+- **Decision log (REQ-DLOG-001):** Records choices in decisions.md with auto/human classification as they happen.
 - Knows: Quarkus, Spring Boot, Laravel, Go, Python, Kotlin, Astro
 
 **`backbone-explorer`**
@@ -369,12 +387,61 @@ Slash commands are AI-assisted workflows triggered via Claude Code. Grouped by w
 ### 🔧 Utilities
 | Command | Use Case |
 |---------|----------|
+| `/backbone:compact-mode` | **Toggle output compression** — `lite` (~30%), `full` (~65%, default), `ultra` (~80%), `off`. Cuts tokens when budgets are tight. |
+| `/backbone:handoff` | **Compact session to handoff** — saves decisions, WIP state, remaining tasks for another agent to continue seamlessly. |
 | `/backbone:cost` | **Track costs** — log heuristic token estimate to SESSION.md. Use after significant work. |
 | `/backbone:push-clean` | **Export clean project copy** — strips AI scaffolding, pushes only runtime code to production repo. Use for deployment or handoff. |
 | `/backbone:sync` | **Sync skills** — pull latest skills from generator. Use after generator updates. |
 | `/backbone:help` | **List commands** — show all available slash commands with one-liners.
 
 ---
+
+## End-to-End Workflow Example
+
+Here's how the new patterns flow together in a typical feature session:
+
+```bash
+# 1. DESIGN — Grill, shared language, YAGNI scope, task breakdown
+/backbone:design user-auth --type backend
+
+# During grilling: agent asks scope questions, applies YAGNI ladder
+# "Do we need OAuth? Native platform has built-in auth — use that."
+# Agent creates CONTEXT.md with domain glossary: "User", "Session", "Token"
+# Agent writes decision log entry: "Using native auth over custom OAuth"
+
+# 2. TASK (single mode) — With YAGNI, self-review, decision log
+/backbone:task
+
+# Agent reads CONTEXT.md, applies 5-rung ladder before each code block
+# Self-review checks: tests pass? no over-engineering? edge cases?
+# Appends decisions to decisions.md as they arise
+
+# 3. TASK (parallel mode) — With file-based handoffs + progress ledger
+/backbone:task --parallel
+
+# Agent runs task-brief.sh per task → dispatches implementer subagents
+# Subagents write reports to files, return only status lines
+# After each wave, appends to .backbone/ledger/progress.md
+
+# 4. REVIEW — With spec compliance gate (checks before code quality)
+/backbone:review
+
+# Reviewer first checks spec compliance:
+#   Missing features? Extra features? Scope creep? YAGNI applied?
+# THEN checks code quality, security, tests
+
+# 5. CLOSE — With decision log review + YAGNI audit
+/backbone:close
+
+# Checks progress ledger for completeness
+# Reviews decisions.md for unresolved items
+# Runs YAGNI over-engineering audit on the diff
+# Standard verification suite runs
+
+# 6. OPTIONAL: Compact mode for token-heavy sessions
+/backbone:compact-mode full
+# Cuts output tokens by ~65% until turned off with /backbone:compact-mode off
+```
 
 ## Subagent Orchestration
 
@@ -385,10 +452,40 @@ The backbone supports parallel task execution with specialized subagents:
 | `backbone-explorer` | Search codebase, find files/patterns (fork=0, fresh context) |
 | `backbone-planner` | Create implementation plans from PRDs (fork=1) |
 | `backbone-implementer` | Implement ONE specific sub-task (fork=1) |
-| `backbone-reviewer` | Review plans and code: quality, security, architecture, tests (fork=1) |
+| `backbone-reviewer` | Review plans and code: quality, security, architecture, tests (fork=1) — includes spec compliance gate |
 | `backbone-verifier` | Run automated gates + adversarial audit (fork=1) |
 
-**Handoff:** Each agent returns structured output (typed contracts). Main agent validates handoff before spawning next agent.
+### File-Based Handoffs (REQ-HOFF-001)
+
+Subagents use file-based handoffs to preserve orchestrator context:
+1. **Task brief** extracted via `scripts/task-brief.sh tasks.md N` — subagent reads brief file, not pasted text
+2. **Report file** written by subagent — orchestrator reads file, only sees status line
+3. **Review package** generated via `scripts/review-package.sh BASE HEAD` — reviewer reads diff from file
+
+### Durable Progress Ledger (REQ-HOFF-002)
+
+Track completed tasks in `.backbone/ledger/progress.md` to survive compaction:
+```
+Task N: complete (commits a1b2c3..d4e5f6, review clean)
+```
+After compaction, check ledger + `git log` before continuing. Never re-dispatch completed tasks.
+
+### YAGNI Ladder (REQ-YAGNI-001)
+
+Every implementer applies the Ponytail protocol before writing code:
+```
+1. Need it? → 2. Stdlib? → 3. Native? → 4. Dep? → 5. One line? → 6. Minimum
+```
+Never cut: validation, security, data-loss prevention, accessibility, real error handling.
+
+### Spec Compliance Gate (REQ-REV-SPEC-001)
+
+Every review starts with spec compliance BEFORE code quality:
+- No extra features (over-building)
+- No missing features (under-building)
+- No scope creep
+- Interface match with plan
+- Ponytail ladder applied
 
 ---
 

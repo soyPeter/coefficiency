@@ -1,0 +1,10 @@
+# Nonconformance Report — NCR-008
+# Created: 2026-06-27
+id: "NCR-008"
+date: "2026-06-27"
+title: "Inconsistent unicode escape sequences (\u20AC, \u2014, \u00D7) across frontend pages"
+severity: minor
+category: code
+source: review
+description: "SimulatorPage.tsx used \u20AC escape (19 occ) while all other 9 files used literal €. BillingSummaryPage.tsx and SimulatorPage.tsx used \u2014 escape while comments/JSX in same files used literal —. SimulatorPage.tsx also had intra-file inconsistency (line 414 literal € vs line 419 escape) and used \u00D7 escape for multiplication sign while 40+ occ elsewhere used ×. All standardized to literal characters."
+status: closed

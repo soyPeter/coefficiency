@@ -1,0 +1,10 @@
+# Nonconformance Report — NCR-006
+# Created: 2026-06-27
+id: "NCR-006"
+date: "2026-06-27"
+title: "Consultants tab errors after old Javalin dump import — missing created_at/updated_at columns"
+severity: major
+category: code
+source: incident
+description: "Old Javalin dumps create consultants table without created_at/updated_at columns. Attempting to ADD COLUMN via ALTER TABLE with NOT NULL DEFAULT silently fails on non-empty tables. JDBI ConstructorMapper fails because these columns don't exist in the result set."
+status: closed

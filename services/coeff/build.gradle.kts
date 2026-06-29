@@ -27,6 +27,8 @@ dependencies {
     implementation(libs.bundles.coeff.core)
     implementation(libs.bundles.coeff.openapi)
     implementation(libs.bundles.jackson)
+    implementation(libs.jooby.flyway)
+    runtimeOnly(libs.flyway.core)
 
     testImplementation(libs.bundles.coeff.testing)
 }

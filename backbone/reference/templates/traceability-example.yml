@@ -1,0 +1,12 @@
+feature: "example-feature"
+prd: "backbone/artifacts/prd/YYYY-MM-DD-feature.md"
+design: "backbone/design/feature-design.md"
+
+requirements:
+  REQ-FEAT-001:
+    title: "Example requirement"
+    design_section: "3.1 Example Section"
+    code:
+      - "src/example/module.ts:exampleFunction()"
+    tests:
+      - "tests/example/test_module.py:test_example_function"

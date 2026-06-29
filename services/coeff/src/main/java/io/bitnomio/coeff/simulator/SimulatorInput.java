@@ -1,11 +1,33 @@
 package io.bitnomio.coeff.simulator;
 
+import java.util.List;
+
 public record SimulatorInput(
-    double salary,
-    double dailyRate,
+    Double fees,
+    Integer annualWorkdays,
+    String name,
+    Integer age,
     String category,
-    int age,
-    double fixedCosts,
-    double benefits,
-    TaxEngine.FamilyDeductions deductions
+    Double grossAnnualSalary,
+    Double dailyMealCard,
+    Double annualPerformanceBonus,
+    String bonusCalendar,
+    Double annualChildSupport,
+    Double annualTraining,
+    Boolean hasLaptop,
+    Double monthlyLaptop,
+    Boolean hasHealthInsurance,
+    Double monthlyHealthInsurance,
+    Double monthlyExtraIT,
+    Double monthlyLicenses,
+    Double otherCosts,
+    List<Integer> workingDays,
+    Boolean married,
+    Integer children,
+    Integer ascendants,
+    Integer disability,
+    String familySituation,
+    Double otherIncomeIRPF,
+    Double otherIncomeSS,
+    Double taxFreeRemuneration
 ) {}

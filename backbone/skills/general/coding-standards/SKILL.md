@@ -45,6 +45,20 @@ Universal coding standards applicable across all projects.
 - Add complexity only when required
 - Start simple, refactor when needed
 
+### 5. Ponytail Decision Ladder (REQ-YAGNI-001)
+Before writing ANY code, climb this ladder. Stop at the first rung that holds:
+
+```
+1. Does this need to exist?          → no: skip it
+2. Stdlib does it?                   → use built-in
+3. Native platform feature?          → use it  (e.g. <input type="date"> not datepicker)
+4. Already-installed dependency?     → use it
+5. One line?                         → one line
+6. Only then: the minimum that works
+```
+
+**Never cut:** validation, data-loss prevention, security, accessibility, error handling for real failures.
+
 ## TypeScript/JavaScript Standards
 
 ### Variable Naming

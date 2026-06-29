@@ -1,0 +1,11 @@
+# Corrective Action — CAPA-007
+# Created: 2026-06-27
+id: "CAPA-007"
+ncr: "NCR-007"
+status: closed
+owner: dev
+due: "2026-06-27"
+root_cause: "baselineOnMigrate(true) marks V1 as applied without running it, so views and ALTER TABLEs from V1 are not applied to restored databases. ALTER TABLE with NOT NULL DEFAULT fails silently on populated tables."
+action_plan: "Add CREATE VIEW statements to migrateSchema() fallback in AdminService. Remove NOT NULL from ALTER TABLE ADD COLUMN statements (DEFAULT alone is sufficient) to prevent silent failures on non-empty tables."
+verification: "V2__add_views.sql created (Flyway migration for views). migrateSchema() CREATE VIEW lines removed (handled by Flyway). All ALTER TABLE NOT NULL DEFAULT changed to DEFAULT-only across migrateSchema() and initSchema()."
+closed_date: "2026-06-27"

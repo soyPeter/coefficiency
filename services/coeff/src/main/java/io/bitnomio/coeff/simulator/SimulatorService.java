@@ -1,89 +1,124 @@
 package io.bitnomio.coeff.simulator;
 
-import jakarta.inject.Inject;
+import io.bitnomio.coeff.shared.util.RoundingUtil;
 import jakarta.inject.Singleton;
-import org.jdbi.v3.core.Jdbi;
 
-import java.util.Map;
+import java.util.List;
 
-/**
- * Orchestrates the COEF simulator: loads defaults from DB, runs tax + cost
- * calculations, and returns profitability metrics for a consultant scenario.
- *
- * <p>The simulator takes a daily rate, gross salary, category, fixed costs,
- * benefits, and family deductions, then computes:
- * <ul>
- *   <li>Gross/net monthly/annual totals</li>
- *   <li>IRPF and Social Security contributions</li>
- *   <li>COEF percentage and margin</li>
- *   <li>Manager bonus (5% of monthly margin)</li>
- * </ul>
- *
- * @since 1.0
- * @see TaxEngine
- * @see SimulatorInput
- * @see SimulatorResult
- */
 @Singleton
 public class SimulatorService {
 
-    private static final double COEF_MULTIPLIER = 1.7;
-    private static final double MNG_BONUS_PCT = 0.05;
-    private static final int COEF_DAYS_MONTH = 21;
-    private static final int COEF_DAYS_YEAR = 252;
+    private static double nvl(Double v) { return v != null ? v : 0.0; }
+    private static int nvli(Integer v) { return v != null ? v : 0; }
+    private static boolean nvlb(Boolean v) { return v != null && v; }
 
-    private final Jdbi jdbi;
-    private final TaxEngine taxEngine;
+    public record CoefConfig(
+        double coefMultiplier,
+        double mngBonusPct,
+        int seguroMonths,
+        int mealCardDays,
+        int coefDaysMonth,
+        int coefDaysYear
+    ) {}
 
-    @Inject
-    public SimulatorService(Jdbi jdbi, TaxEngine taxEngine) {
-        this.jdbi = jdbi;
-        this.taxEngine = taxEngine;
-    }
+    public SimulatorResult calculate(SimulatorInput input, TaxEngine engine, double lirpfExpenses,
+                                     CoefConfig coefConfig) {
+        double fees = nvl(input.fees());
+        double grossAnnualSalary = nvl(input.grossAnnualSalary());
+        double grossMonthlySalary = grossAnnualSalary / 12.0;
 
-    /**
-     * Returns simulator defaults: working-day constants, professional categories,
-     * and available cost concepts from the database.
-     */
-    public Map<String, Object> defaults() {
-        var concepts = jdbi.withHandle(h -> h.createQuery("SELECT * FROM cost_concepts ORDER BY name").mapToMap().list());
-        return Map.of(
-            "coefDaysMonth", COEF_DAYS_MONTH,
-            "coefDaysYear", COEF_DAYS_YEAR,
-            "categories", new String[]{"junior", "semi-senior", "senior", "lead", "manager"},
-            "concepts", concepts
-        );
-    }
+        double dailyMealCard = nvl(input.dailyMealCard());
+        double annualBonus = nvl(input.annualPerformanceBonus());
+        double annualChildSupport = nvl(input.annualChildSupport());
+        double annualTraining = nvl(input.annualTraining());
+        boolean hasLaptop = nvlb(input.hasLaptop());
+        double monthlyLaptop = nvl(input.monthlyLaptop());
+        boolean hasHealthInsurance = nvlb(input.hasHealthInsurance());
+        double monthlyHealthInsurance = nvl(input.monthlyHealthInsurance());
+        double monthlyExtraIT = nvl(input.monthlyExtraIT());
+        double monthlyLicenses = nvl(input.monthlyLicenses());
+        double otherCosts = nvl(input.otherCosts());
+        int children = nvli(input.children());
+        int ascendants = nvli(input.ascendants());
+        int disability = nvli(input.disability());
+        String familySituation = input.familySituation() != null ? input.familySituation() : (nvlb(input.married()) ? "married" : "single");
+        String category = input.category();
+        double otherIncomeIRPF = nvl(input.otherIncomeIRPF());
+        double otherIncomeSS = nvl(input.otherIncomeSS());
 
-    /**
-     * Runs the full simulation: computes IRPF, Social Security, total consultant
-     * cost, annual fees, COEF percentage, monthly margin, and manager bonus.
-     *
-     * @param input simulation parameters
-     * @return detailed result with breakdown
-     */
-    public SimulatorResult calculate(SimulatorInput input) {
-        var annualFees = input.dailyRate() * COEF_DAYS_YEAR;
-        var grossSalary = input.salary();
+        double mult = coefConfig.coefMultiplier();
+        int cm = coefConfig.coefDaysMonth();
+        int cy = coefConfig.coefDaysYear();
 
-        var irpf = taxEngine.calculateIrpf(grossSalary, input.deductions());
-        var ss = taxEngine.calculateSs(grossSalary, input.category());
+        double annualFees = (fees / cm) * cy;
 
-        var totalCost = (grossSalary * COEF_MULTIPLIER)
-                + (input.benefits() * COEF_MULTIPLIER)
-                + input.fixedCosts()
-                + ss.employeeSs()
-                + irpf.totalIrpf();
+        double totalAnnualCost =
+            grossAnnualSalary * mult
+            + dailyMealCard * cy * mult
+            + annualBonus * mult
+            + annualChildSupport * mult
+            + annualTraining
+            + (hasLaptop ? monthlyLaptop * 12 : 0)
+            + (hasHealthInsurance ? monthlyHealthInsurance * coefConfig.seguroMonths() : 0)
+            + monthlyExtraIT * 12
+            + monthlyLicenses * 12
+            + otherCosts;
 
-        var annualMargin = annualFees - totalCost;
-        var monthlyMargin = annualMargin / COEF_DAYS_YEAR * COEF_DAYS_MONTH;
-        var monthlyFees = annualFees / COEF_DAYS_YEAR * COEF_DAYS_MONTH;
-        var coefPct = monthlyFees > 0 ? monthlyMargin / monthlyFees : 0;
-        var managerBonus = monthlyMargin * MNG_BONUS_PCT;
+        double annualMargin = annualFees - totalAnnualCost;
+        double coefMargin = RoundingUtil.round2((annualMargin / cy * cm));
+        double coef = fees > 0 ? RoundingUtil.round4((coefMargin / fees)) : 0;
+        double managerBonus = RoundingUtil.round2(coefMargin * coefConfig.mngBonusPct());
+        double totalConsultantCost = RoundingUtil.round2((fees - coefMargin));
+
+        TaxEngine.FamilyResult family = engine.calculateFamilyDeductions(children, ascendants, disability, familySituation);
+        double ssBase = grossAnnualSalary + otherIncomeSS;
+        TaxEngine.SSResult ss = engine.calculateSS(ssBase, category);
+
+        double irpfBase = grossAnnualSalary + otherIncomeIRPF - ss.annual() - lirpfExpenses;
+        TaxEngine.TaxResult irpf = engine.calculateIRPF(irpfBase, grossAnnualSalary, family);
+
+        double monthlyIrpf = RoundingUtil.round2(irpf.total() / 12.0);
+        double monthlySs = ss.monthly();
+        double netMonthly = RoundingUtil.round2((grossMonthlySalary - monthlyIrpf - monthlySs));
+        double netAnnual = RoundingUtil.round2(netMonthly * 12.0);
+
+        double grossMonthlySalaryRounded = RoundingUtil.round2(grossMonthlySalary);
+
+        List<SimulatorResult.MonthlyRow> projection = buildMonthlyProjection(
+            grossAnnualSalary, dailyMealCard, annualBonus, annualChildSupport,
+            annualTraining, cy, ss, irpf, mult, coefConfig);
 
         return new SimulatorResult(
-            coefPct, monthlyMargin, monthlyFees, managerBonus,
-            new SimulatorResult.Breakdown(grossSalary, irpf.totalIrpf(), ss.employeeSs(), totalCost, annualFees)
+            grossMonthlySalaryRounded, netMonthly, netAnnual,
+            monthlySs, monthlyIrpf, irpf.rate(), ss.rate(),
+            totalConsultantCost, coef, coefMargin, managerBonus, projection
         );
+    }
+
+    private List<SimulatorResult.MonthlyRow> buildMonthlyProjection(
+            double grossAnnualSalary, double dailyMealCard, double annualBonus,
+            double annualChildSupport, double annualTraining, int cy,
+            TaxEngine.SSResult ss, TaxEngine.TaxResult irpf,
+            double mult, CoefConfig coefConfig) {
+        double grossMonthly = RoundingUtil.round2(grossAnnualSalary / 12.0);
+        double monthlyMeal = RoundingUtil.round2(dailyMealCard * coefConfig.mealCardDays());
+        double monthlyBonus = RoundingUtil.round2(annualBonus / 12.0);
+        double monthlyChild = RoundingUtil.round2(annualChildSupport / 12.0);
+        double monthlyTraining = RoundingUtil.round2(annualTraining / 12.0);
+        double monthlySs = ss.monthly();
+        double monthlyIrpfAmt = RoundingUtil.round2(irpf.total() / 12.0);
+
+        String[] monthNames = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+        var rows = new java.util.ArrayList<SimulatorResult.MonthlyRow>();
+        for (int i = 0; i < 12; i++) {
+            double gross = grossMonthly + monthlyMeal * mult + monthlyBonus * mult
+                         + monthlyChild * mult + monthlyTraining;
+            double neto = RoundingUtil.round2(grossMonthly - monthlySs - monthlyIrpfAmt);
+            rows.add(new SimulatorResult.MonthlyRow(
+                monthNames[i], null, gross, monthlyMeal, monthlyChild,
+                monthlyBonus, monthlyTraining, monthlySs, monthlyIrpfAmt, neto
+            ));
+        }
+        return rows;
     }
 }

@@ -33,6 +33,28 @@ This enables the conflict-check hook to prevent parallel subagents from overwrit
 ## MCP Resources
 - **Context7** — Available MCP server for library API docs. Before writing framework code, call `resolve-library-id` + `query-docs` to verify current API signatures. Requires `CONTEXT7_API_KEY` env var.
 
+## YAGNI Decision Ladder (Ponytail Protocol — REQ-YAGNI-001)
+
+Before writing ANY code, climb this decision ladder and stop at the first rung that holds:
+
+```
+1. Does this need to exist?          → no: skip it (YAGNI)
+2. Stdlib does it?                   → use it
+3. Native platform feature?          → use it  (e.g. <input type="date"> over datepicker lib)
+4. Already-installed dependency?     → use it
+5. One line?                         → one line
+6. Only then: the minimum that works
+```
+
+**Safety exclusions** (never cut these for brevity):
+- Trust-boundary validation (input sanitization, auth checks)
+- Data-loss prevention (confirm destructive operations)
+- Security boundaries (access control, secret handling)
+- Accessibility (a11y attributes, keyboard nav)
+- Error handling for real failure modes (network, disk, auth)
+
+**Lazy, not negligent.** The shortest correct solution wins. Before adding a dependency, ask: does stdlib or the platform already solve this? Before writing 50 lines, ask: can this be 5?
+
 ## Implementation Rules
 - Make MINIMAL changes — never rewrite entire files
 - Use Edit tool, not Write (unless creating new file)
@@ -41,6 +63,55 @@ This enables the conflict-check hook to prevent parallel subagents from overwrit
 - Verify library APIs via Context7 before writing framework code
 - Add tests if the project has them
 - Run relevant tests after changes
+
+## File-Based Handoff Protocol (REQ-HOFF-001)
+
+The orchestrator passes task context as files, never pasted text. Your dispatch will include:
+
+1. **Task brief file path** — Read this first. It contains your complete requirements, exact values, and test cases. Do not rely on any context other than the brief file.
+2. **Report file path** — Write your results here. Append to the file, do not overwrite. The full report includes: files modified, files created, test results, issues, and self-review.
+
+**Report file format** (append to the report file path given in your dispatch):
+
+```
+## Implementation Report
+
+### Status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
+
+### Files Modified
+- path/to/file.ts (lines X-Y): brief description of change
+
+### Files Created
+- path/to/new-file.ts: purpose
+
+### Test Results
+- Tests: PASS/FAIL (N passed, M failed)
+- Build: PASS/FAIL
+
+### Self-Review
+- What was checked: [list of self-review checks performed]
+- Issues found and fixed: [list of issues caught during self-review]
+- Remaining concerns: [list or "None"]
+
+### Commits
+- SHA range: <base>..<head>
+```
+
+**Return to orchestrator:** Only your status line and a one-line summary. The full details are in the report file.
+
+```
+Status: DONE
+Summary: Implemented validateIndex() with 4 issue types, 8/8 tests pass
+```
+
+## Self-Review (REQ-SRV-001)
+
+Before returning, review your own work against these checks:
+1. **Ponytail ladder applied?** — Did you check stdlib/native/deps before writing new code?
+2. **YAGNI?** — Is every line necessary? No speculative generality?
+3. **Edge cases?** — Empty states, error paths, boundary values handled?
+4. **Tests pass?** — All relevant tests run and passing?
+5. **No debugging artifacts?** — No console.log, commented code, TODOs?
 
 ## When Stuck — Return to Parent
 - **Debugging:** Read error logs, run tests with Bash, and report findings to the parent agent. Do NOT spawn other agents.
@@ -68,27 +139,8 @@ Types:
 
 When continuing from a parent's `checkpoint_response`, the response will be in the first message. Read it and proceed accordingly.
 
-## Structured Output Contract
+## Output Format (when not using file-based handoff)
 
-```yaml
-implementation:
-  task: "string"
-  files_modified:
-    - path: "path/to/file.ts"
-      lines: "X-Y"
-      change: "description"
-  files_created:
-    - path: "path/to/new-file.ts"
-      purpose: "description"
-  test_results:
-    tests_passed: 0
-    tests_failed: 0
-    build_status: "PASS" | "FAIL"
-  issues: []
-  delegated_to: ""  # if applicable
-```
-
-## Output Format
 ```
 ## Implementation: <task>
 

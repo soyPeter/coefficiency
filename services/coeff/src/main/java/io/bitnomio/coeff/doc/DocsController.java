@@ -2,7 +2,6 @@ package io.bitnomio.coeff.doc;
 
 import io.jooby.annotation.GET;
 import io.jooby.annotation.Path;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.List;
@@ -11,7 +10,6 @@ import java.util.Map;
 @Singleton @Path("/api")
 public class DocsController {
 
-    @Inject
     public DocsController() {}
 
     @GET @Path("/docs")
@@ -71,8 +69,8 @@ public class DocsController {
                 config("fiscal.workingDays", "[21,21,22,22,21,22,22,21,22,21,22,21]", "Working days per month")
             ),
             "csvFormat", Map.of(
-                "columns", List.of("name", "client", "position", "tariff", "startDate", "endDate"),
-                "example", "John Doe,Acme Corp,Developer,450,2025-01-15,"
+                "columns", List.of("name", "client", "position", "coef", "tariff", "startDate", "endDate", "fees"),
+                "example", "John Doe,Acme Corp,Developer,1.2,450,2025-01-15,,6930"
             )
         );
     }

@@ -9,6 +9,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -66,12 +67,11 @@ public class AuthController {
     @Path("/setup")
     public Map<String, String> setup(SetupRequest req) {
         if (req.username().length() < 3) throw new IllegalArgumentException("Username must be at least 3 characters");
-        if (req.password().length() < 4) throw new IllegalArgumentException("Password must be at least 4 characters");
+        if (req.password().length() < 8) throw new IllegalArgumentException("Password must be at least 8 characters");
         if (authRepository.exists()) throw new io.bitnomio.coeff.shared.exceptions.ConflictException("Setup already completed");
         dbEncryption.createKeyFile(req.password());
-        var salt = authService.generateSalt();
-        var hash = authService.hashPassword(req.password(), salt);
-        authRepository.save(req.username(), hash, salt);
+        var hash = authService.hashPassword(req.password(), "");
+        authRepository.save(req.username(), hash, "");
         dbEncryption.encrypt();
         dbEncryption.startPeriodicSync();
         return Map.of("token", authService.createToken(req.username()));
@@ -95,8 +95,13 @@ public class AuthController {
         }
         var user = authRepository.findByUsername(req.username())
             .orElseThrow(() -> new IllegalStateException("Invalid credentials"));
-        var hash = authService.hashPassword(req.password(), user.salt());
-        if (!hash.equals(user.passwordHash())) throw new IllegalStateException("Invalid credentials");
+        if (!authService.checkPassword(req.password(), user.passwordHash(), user.salt())) {
+            throw new IllegalStateException("Invalid credentials");
+        }
+        if (!user.passwordHash().startsWith("$2a$")) {
+            var newHash = authService.migrateToBCrypt(req.password(), user.passwordHash(), user.salt());
+            authRepository.save(req.username(), newHash, "");
+        }
         dbEncryption.startPeriodicSync();
         return Map.of("token", authService.createToken(req.username()));
     }
@@ -111,5 +116,40 @@ public class AuthController {
         dbEncryption.stopPeriodicSync();
         dbEncryption.encrypt();
         dbEncryption.deleteDecryptedDb();
+    }
+
+    @POST @Path("/password")
+    public Map<String, Object> changePassword(PasswordRequest req) {
+        if (req.newPassword() == null || req.newPassword().length() < 8) {
+            throw new IllegalArgumentException("Password must be at least 8 characters");
+        }
+        var user = authRepository.findByUsername(
+            java.util.Optional.ofNullable(authService.extractUsername(
+                java.util.Optional.ofNullable(org.slf4j.MDC.get("token")).orElse("")))
+            .orElse("admin"))
+            .orElseThrow(() -> new IllegalStateException("User not found"));
+        if (!authService.checkPassword(req.oldPassword(), user.passwordHash(), user.salt())) {
+            throw new IllegalArgumentException("Invalid current password");
+        }
+        dbEncryption.encrypt();
+        dbEncryption.createKeyFile(req.newPassword());
+        dbEncryption.deleteDecryptedDb();
+        sqliteConnection.reinit();
+        dbEncryption.decrypt(req.newPassword());
+        sqliteConnection.reinit();
+        var newHash = authService.hashPassword(req.newPassword(), "");
+        authRepository.save(user.username(), newHash, "");
+        dbEncryption.startPeriodicSync();
+        return Map.of("ok", true);
+    }
+
+    @POST @Path("/reset-database")
+    public Map<String, Object> resetDatabase() {
+        dbEncryption.stopPeriodicSync();
+        dbEncryption.deleteDecryptedDb();
+        try { java.nio.file.Files.deleteIfExists(java.nio.file.Path.of("data/app.db.enc")); } catch (Exception ignored) {}
+        try { java.nio.file.Files.deleteIfExists(java.nio.file.Path.of("data/.db-key")); } catch (Exception ignored) {}
+        try { java.nio.file.Files.deleteIfExists(java.nio.file.Path.of("data/.hmac-secret")); } catch (Exception ignored) {}
+        return Map.of("ok", true, "message", "Database reset. Please restart.");
     }
 }

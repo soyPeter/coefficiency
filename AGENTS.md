@@ -1,4 +1,4 @@
-<!-- VERSION: 2026.06.13#ImprovebackbonecommandswithGSDpatterns+decisions+memory+compact(CHNG-038) -->
+<!-- VERSION: 2026.06.22#Addunattendedloopmodeto/backbone:taskwith--loop/--goalflags+maker/checkersplit(CHNG-041) -->
 
 > **⚠️ TEMPLATE FILE — For Generated Projects**
 > This file is a **template** that gets copied into new projects when you run `init-project.sh`. It is NOT the bootstrap for the agentic-backbone generator itself.
@@ -10,7 +10,7 @@
 # AI Agent Bootstrap
 
 > This project was initialized using the **Agentic Backbone** generator.
-> Backbone version: 2026.06.13#ImprovebackbonecommandswithGSDpatterns+decisions+memory+compact(CHNG-038)
+> Backbone version: 2026.06.22#Addunattendedloopmodeto/backbone:taskwith--loop/--goalflags+maker/checkersplit(CHNG-041)
 
 ## Right Now — 30 Second Start
 
@@ -63,6 +63,7 @@ This project uses blocking review gates. You **cannot skip** these steps:
 | Amend existing | `/backbone:design --amend CHNG-XXX` | Create new CHNG-NNN with `parent: CHNG-XXX`, write delta docs |
 | Execute task | `/backbone:task` | Find [WIP] task in `3-TASKS.md`, implement, trace REQ-IDs |
 | Quick task | `/backbone:task --quick` | Directly edit, then `git commit` |
+| Loop task | `/backbone:task --loop 30m --goal "tests pass"` | Unattended automation — runs on cadence until goal met, checked by separate verifier |
 | Review | `/backbone:review` | `./scripts/secret-scan.sh --staged && ./scripts/verify-traceability.sh` |
 | Code review | `/backbone:review --depth deep` | Preflight gate (build+lint+test), signal-based specialist subagents, aggregated findings with severity triage |
 | Health check | `/backbone:review --depth quick` | `git status`, run tests, check build |

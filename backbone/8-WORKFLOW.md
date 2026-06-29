@@ -240,6 +240,28 @@ The following gates **block** Write/Edit operations and commits. They are not su
 - `docs(backbone): update 3-TASKS.md with M3 progress`
 - `security(backbone): add prompt injection guard`
 
+## Subagent Execution: File-Based Handoffs & Durable Progress (REQ-HOFF-001)
+
+When executing plans via subagents, use file-based handoffs to preserve orchestrator context:
+
+1. **Task brief** — Extract each task to a temp file with `./scripts/task-brief.sh tasks.md N`. Dispatch subagent with the brief path, not pasted task text.
+2. **Report file** — Subagent writes full results (files changed, test results, self-review) to a report file. Only status + one-line summary returned to orchestrator.
+3. **Review package** — Generate diff as file with `./scripts/review-package.sh BASE HEAD`. Reviewer reads the file, not pasted diff output.
+
+**Durable progress ledger (REQ-HOFF-002):** Track completed tasks in a ledger file at `.backbone/ledger/progress.md` so progress survives compaction:
+
+```
+Task N: complete (commits a1b2c3..d4e5f6, review clean)
+Task N+1: complete (commits e5f6g7..h8i9j0, review clean)
+```
+
+After any context compaction or session resume, check the ledger before continuing:
+```bash
+cat .backbone/ledger/progress.md 2>/dev/null || echo "(no ledger)"
+git log --oneline -5
+```
+Tasks listed as complete — do NOT re-dispatch. Resume at the first incomplete task.
+
 ## Definition of Done (For Agents)
 
 A task is not complete until:
@@ -248,6 +270,7 @@ A task is not complete until:
 2. **Security validated** — No prompt injection patterns, no secrets in code
 3. **QMS: defects registered** — If a defect or nonconformance was discovered, an NCR was registered via `/backbone:qms` or `./scripts/qms-register-issue.sh`
 4. **Success criteria defined** — The task was transformed into verifiable goals before coding (Backbone Principle #4)
+4. **YAGNI ladder applied (REQ-YAGNI-001)** — Ponytail protocol: checked stdlib/native/deps before writing new code?
 4. The code adheres to the project's architectural boundaries
 5. **English naming** — All identifiers (classes, methods, variables, constants, files, packages, tables, endpoints) are in English only. No mixed-language identifiers.
 6. Required tests are written using the project's testing standards

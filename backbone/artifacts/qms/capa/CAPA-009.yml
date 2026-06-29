@@ -1,0 +1,12 @@
+# Corrective Action — CAPA-009
+# Created: 2026-06-27
+
+id: "CAPA-009"
+ncr: "NCR-009"
+status: closed
+owner: dev
+due: "2026-06-27"
+root_cause: "ReportService.getPerConsultant() used Map.of() immutable map for sorters, which rejects null keys in getOrDefault(). Filter also assumed name/client fields are non-null before calling toLowerCase()."
+action_plan: "Wrap sorters map in HashMap to accept null keys. Add null check for sortBy before getOrDefault. Add null guards for name/client in filter and map expressions."
+verification: "Null sortBy handled via null check. name/client null-guarded in filter and map. HashMap used instead of Map.of(). Compiles and 84 tests pass."
+closed_date: "2026-06-27"

@@ -1,0 +1,10 @@
+# Nonconformance Report — NCR-010
+# Created: 2026-06-29
+id: "NCR-010"
+date: "2026-06-29"
+title: "Reports tab crashes with TypeError: undefined is not an object (evaluating 'n.toLocaleString')"
+severity: major
+category: code
+source: incident
+description: "fmt() function in ReportsPage.tsx calls n.toLocaleString() assuming n is always a number. After Javalin dump import, backend can return null for numeric fields (coefMargin, managerBonus, tariff, etc.). Passing null to fmt() causes TypeError."
+status: open

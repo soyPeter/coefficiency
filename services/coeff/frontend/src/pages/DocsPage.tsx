@@ -244,6 +244,18 @@ export default function DocsPage() {
                     <span className="text-emerald-500 mt-1">&#10003;</span>
                     <span><FormattedMessage id="docs.aboutFeature5" /></span>
                   </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-500 mt-1">&#10003;</span>
+                    <span>Consolidated Reports page with 11 sections, period filter, and full/section CSV download</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-500 mt-1">&#10003;</span>
+                    <span>Login gate with HMAC-signed tokens, auto-logout on inactivity, backend token validation middleware</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-emerald-500 mt-1">&#10003;</span>
+                    <span>AES-256 encrypted SQLite database with periodic sync and manual backup/restore from Configuration &gt; Maintenance</span>
+                  </li>
                 </ul>
               </CardContent>
             </Card>

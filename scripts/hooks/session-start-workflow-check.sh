@@ -148,6 +148,18 @@ if [ "$WIP_COUNT" -gt 0 ]; then
     echo ""
 fi
 
+# ── Progress Ledger Check (REQ-HOFF-002) ───────────────────────────────────
+LEDGER_FILE="$PROJECT_DIR/.backbone/ledger/progress.md"
+if [ -f "$LEDGER_FILE" ]; then
+    LEDGER_LINES=$(grep -c '^Task' "$LEDGER_FILE" 2>/dev/null || echo "0")
+    if [ "$LEDGER_LINES" -gt 0 ]; then
+        echo -e "  ${BLUE}📋 Durable Progress Ledger: $LEDGER_LINES completed task(s)${NC}"
+        echo "     Last entry: $(tail -1 "$LEDGER_FILE" 2>/dev/null)"
+        echo "     If resuming after compaction: trust the ledger, not memory."
+        echo ""
+    fi
+fi
+
 # ── Available Skills Discovery ──────────────────────────────────────────────
 echo "  📚 Available Skills (auto-discovered from backbone/skills/):"
 echo ""

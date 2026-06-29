@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "$HOME/.backbone/opencode/plugins/backbone-wip-check.js",
+    "$HOME/.backbone/opencode/plugins/backbone-conventions-check.js",
+    "$HOME/.backbone/opencode/plugins/backbone-skill-check.js",
+    "$HOME/.backbone/opencode/plugins/backbone-bash-safety.js",
+    "$HOME/.backbone/opencode/plugins/backbone-grill-check.js",
+    "$HOME/.backbone/opencode/plugins/backbone-task-granularity.js",
+    "$HOME/.backbone/opencode/plugins/backbone-rd-gate.js",
+    "$HOME/.backbone/opencode/plugins/backbone-subagent-conflict.js",
+    "$HOME/.backbone/opencode/plugins/backbone-layer-check.js"
+  ]
+}

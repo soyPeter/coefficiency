@@ -179,6 +179,20 @@ public class DbEncryption {
 
     public void deleteDecryptedDb() { dbFile.delete(); }
 
+    public void decryptDirect(String targetPath) {
+        if (encryptionKey == null) return;
+        try {
+            if (!encFile.exists()) return;
+            var encrypted = Files.readAllBytes(encFile.toPath());
+            var decrypted = aesGcmDecrypt(encrypted, encryptionKey);
+            try (var out = new FileOutputStream(targetPath)) {
+                out.write(decrypted);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to decrypt database directly", e);
+        }
+    }
+
     private byte[] deriveKey(String password, byte[] salt) throws Exception {
         var factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
         var spec = new PBEKeySpec(password.toCharArray(), salt, PBKDF2_ITERATIONS, KEY_SIZE);

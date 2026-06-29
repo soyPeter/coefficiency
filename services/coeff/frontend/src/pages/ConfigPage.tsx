@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Save } from 'lucide-react';
+import { Plus, Trash2, Save, Download, Upload, Database, Lock, Loader2 } from 'lucide-react';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,7 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { authHeaders } from '@/api';
+import { useDumpBackups } from '@/hooks/useDumpBackups';
+import { authHeaders, changePassword, createBackup, listBackups, restoreBackup, createDumpBackup, restoreDumpBackup, pruneDatabase } from '@/api';
+import type { BackupFile } from '@/api';
 
 const BASE = '/api';
 
@@ -38,11 +40,35 @@ export default function ConfigPage() {
   const [coefAlertThreshold, setCoefAlertThreshold] = useState(0.15);
   const [autoLogoutTimeout, setAutoLogoutTimeout] = useState(15);
   const [pendingConfirm, setPendingConfirm] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
+  const [passwordMsg, setPasswordMsg] = useState('');
+  const [pwOld, setPwOld] = useState('');
+  const [pwNew1, setPwNew1] = useState('');
+  const [pwNew2, setPwNew2] = useState('');
+  const [backups, setBackups] = useState<BackupFile[]>([]);
+  const [backupMsg, setBackupMsg] = useState('');
+  const [dumpPw, setDumpPw] = useState('');
+  const [dumpPw2, setDumpPw2] = useState('');
+  const [restorePw, setRestorePw] = useState('');
+  const [pruning, setPruning] = useState(false);
   const [params, setParams] = useState({
     coefMultiplier: 1.7, mngBonusPct: 0.05, insuranceMonths: 6, mealCardDays: 22,
     ssRate: 0.0635, ssContingencies: 0.047, ssUnemployment: 0.0155, ssTraining: 0.001,
-    personalMinimum: 5550, deductionChild: 2400, deductionAsc: 1150, deductionDis: 3000,
+    personalMinimum: 5550, deductionSpouse: 2150, deductionChild: 2400, deductionAsc: 1150, deductionDis: 3000,
   });
+  const [mngBonusExcludedMonths, setMngBonusExcludedMonths] = useState<number[]>([]);
+  const [tenureBonusAmount, setTenureBonusAmount] = useState(300);
+  const [tenureBonusMonths, setTenureBonusMonths] = useState(3);
+  const [quarterlyBonusAmount, setQuarterlyBonusAmount] = useState(500);
+  const [positionTariffAlertPct, setPositionTariffAlertPct] = useState(0);
+  const [savedMngBonus, setSavedMngBonus] = useState('');
+  const [savedBonusPayout, setSavedBonusPayout] = useState('');
+  const [savedTariffAlert, setSavedTariffAlert] = useState('');
+  const [savedFamily, setSavedFamily] = useState('');
+  const dump = useDumpBackups(authFetch);
+
+  const loadBackups = async () => {
+    try { setBackups(await listBackups()); } catch {}
+  };
 
   useEffect(() => {
     authFetch(`${BASE}/settings`).then(r => r.json()).then(d => {
@@ -59,6 +85,11 @@ export default function ConfigPage() {
       setTotalWorkingDays(d.coefDaysYear || 0);
       setLirpfExpenses(d.gastosLIRPF ?? 2000);
       setCoefAlertThreshold(d.coefAlertThreshold ?? 0.15);
+      setMngBonusExcludedMonths(Array.isArray(d.mng_bonus_excluded_months) ? d.mng_bonus_excluded_months : []);
+      setTenureBonusAmount(d.tenure_bonus_amount ?? 300);
+      setTenureBonusMonths(d.tenure_bonus_months ?? 3);
+      setQuarterlyBonusAmount(d.quarterly_bonus_amount ?? 500);
+      setPositionTariffAlertPct(d.position_tariff_alert_pct ?? 0);
       setParams({
         coefMultiplier: d.coefMultiplier ?? 1.7,
         mngBonusPct: d.mngBonusPct ?? 0.05,
@@ -66,6 +97,7 @@ export default function ConfigPage() {
         mealCardDays: d.mealCardDays ?? 22,
         ssRate: d.ssRate ?? 0.0635,
         personalMinimum: d.personalMinimum ?? 5550,
+        deductionSpouse: d.deduction_spouse ?? 2150,
         deductionChild: d.deductionChild ?? 2400,
         deductionAsc: d.deductionAsc ?? 1150,
         deductionDis: d.deductionDis ?? 3000,
@@ -139,6 +171,45 @@ export default function ConfigPage() {
     setTimeout(() => setSavedTimeout(false), 3000);
   };
 
+  const saveFiscalSetting = async (key: string, value: string) => {
+    await authFetch(`${BASE}/fiscal/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify({ value }),
+    });
+  };
+
+  const saveMngBonus = async () => {
+    await saveFiscalSetting('mng_bonus_pct', String(params.mngBonusPct));
+    await saveFiscalSetting('mng_bonus_excluded_months', JSON.stringify(mngBonusExcludedMonths));
+    setSavedMngBonus('ok');
+    setTimeout(() => setSavedMngBonus(''), 3000);
+  };
+
+  const saveFamilyThresholds = async () => {
+    await saveFiscalSetting('personal_minimum', String(params.personalMinimum));
+    await saveFiscalSetting('deduction_spouse', String(params.deductionSpouse));
+    await saveFiscalSetting('deduction_child', String(params.deductionChild));
+    await saveFiscalSetting('deduction_asc', String(params.deductionAsc));
+    await saveFiscalSetting('deduction_dis', String(params.deductionDis));
+    await saveFiscalSetting('lirpf_expenses', String(lirpfExpenses));
+    setSavedFamily('ok');
+    setTimeout(() => setSavedFamily(''), 3000);
+  };
+
+  const saveBonusPayouts = async () => {
+    await saveFiscalSetting('tenure_bonus_amount', String(tenureBonusAmount));
+    await saveFiscalSetting('tenure_bonus_months', String(tenureBonusMonths));
+    await saveFiscalSetting('quarterly_bonus_amount', String(quarterlyBonusAmount));
+    setSavedBonusPayout('ok');
+    setTimeout(() => setSavedBonusPayout(''), 3000);
+  };
+
+  const saveTariffAlert = async () => {
+    await saveFiscalSetting('position_tariff_alert_pct', String(positionTariffAlertPct));
+    setSavedTariffAlert('ok');
+    setTimeout(() => setSavedTariffAlert(''), 3000);
+  };
+
   const saveParams = async () => {
     const res = await authFetch(`${BASE}/fiscal/params`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
@@ -155,6 +226,7 @@ export default function ConfigPage() {
         mealCardDays: d.mealCardDays ?? 22,
         ssRate: d.ssRate ?? 0.0635,
         personalMinimum: d.personalMinimum ?? 5550,
+        deductionSpouse: d.deduction_spouse ?? 2150,
         deductionChild: d.deductionChild ?? 2400,
         deductionAsc: d.deductionAsc ?? 1150,
         deductionDis: d.deductionDis ?? 3000,
@@ -170,6 +242,7 @@ export default function ConfigPage() {
           <TabsTrigger value="delta"><FormattedMessage id="config.deltaTab" /></TabsTrigger>
           <TabsTrigger value="concepts"><FormattedMessage id="config.conceptsTab" /></TabsTrigger>
           <TabsTrigger value="fiscal"><FormattedMessage id="config.fiscalTab" /></TabsTrigger>
+          <TabsTrigger value="maintenance"><FormattedMessage id="config.maintenanceTab" /></TabsTrigger>
         </TabsList>
 
         <TabsContent value="delta">
@@ -200,6 +273,38 @@ export default function ConfigPage() {
                 </div>
                 <Button onClick={saveSessionTimeout}><FormattedMessage id="config.save" /></Button>
                 {savedTimeout && <p className="text-sm text-emerald-600"><FormattedMessage id="config.saved" /></p>}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base"><Lock className="size-4 inline mr-1" /> <FormattedMessage id="config.changePassword" /></CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label><FormattedMessage id="config.currentPassword" /></Label>
+                  <Input type="password" value={pwOld} onChange={e => setPwOld(e.target.value)} />
+                </div>
+                <div>
+                  <Label><FormattedMessage id="config.newPassword" /></Label>
+                  <Input type="password" value={pwNew1} onChange={e => setPwNew1(e.target.value)} />
+                </div>
+                <div>
+                  <Label><FormattedMessage id="config.confirmPassword" /></Label>
+                  <Input type="password" value={pwNew2} onChange={e => setPwNew2(e.target.value)} />
+                </div>
+                <Button onClick={async () => {
+                  if (!pwOld || !pwNew1) { setPasswordMsg(intl.formatMessage({ id: 'common.error' })); return; }
+                  if (pwNew1.length < 8) { setPasswordMsg(intl.formatMessage({ id: 'common.error' })); return; }
+                  if (pwNew1 !== pwNew2) { setPasswordMsg(intl.formatMessage({ id: 'auth.passwordsDontMatch' })); return; }
+                  try {
+                    await changePassword(pwOld, pwNew1);
+                    setPasswordMsg(intl.formatMessage({ id: 'config.passwordChanged' }));
+                    setPwOld(''); setPwNew1(''); setPwNew2('');
+                    setTimeout(() => setPasswordMsg(''), 3000);
+                  } catch (e: any) { setPasswordMsg(e.message || intl.formatMessage({ id: 'common.error' })); }
+                }}><FormattedMessage id="config.changePassword" /></Button>
+                {passwordMsg && <p className={`text-sm ${passwordMsg === intl.formatMessage({ id: 'config.passwordChanged' }) ? 'text-emerald-600' : 'text-red-600'}`}>{passwordMsg}</p>}
               </CardContent>
             </Card>
           </div>
@@ -328,22 +433,79 @@ export default function ConfigPage() {
                 {savedFiscal === 'days' && <span className="text-sm text-emerald-600 ml-2"><FormattedMessage id="config.saved" /></span>}
               </CardContent>
             </Card>
-            {/* Editable params */}
+            {/* Card Multipliers */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base"><FormattedMessage id="config.coefEngineParams" /></CardTitle>
+                <CardTitle className="text-base"><FormattedMessage id="config.cardMultipliers" /></CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <div>
-                    <Label><FormattedMessage id="config.coefMultiplier" /></Label>
-                    <Input type="number" step="0.01" value={params.coefMultiplier}
-                           onChange={e => setParams({...params, coefMultiplier: parseFloat(e.target.value)||0})} />
-                  </div>
+                <div className="max-w-xs">
+                  <Label><FormattedMessage id="config.coefMultiplier" /></Label>
+                  <Input type="number" step="0.01" value={params.coefMultiplier}
+                         onChange={e => setParams({...params, coefMultiplier: parseFloat(e.target.value)||0})} />
+                </div>
+                <Button size="sm" className="mt-4" onClick={async () => {
+                  await saveFiscalSetting('coef_multiplier', String(params.coefMultiplier));
+                  setSavedFiscal('multiplier');
+                  setTimeout(() => setSavedFiscal(''), 3000);
+                }}>
+                  <Save className="size-3.5 mr-1" /> <FormattedMessage id="config.save" />
+                </Button>
+                {savedFiscal === 'multiplier' && <span className="text-sm text-emerald-600 ml-2"><FormattedMessage id="config.saved" /></span>}
+              </CardContent>
+            </Card>
+
+            {/* Card Manager Bonus */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base"><FormattedMessage id="config.cardManagerBonus" /></CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <Label><FormattedMessage id="config.mngBonusPct" /></Label>
                     <Input type="number" step="0.001" value={params.mngBonusPct}
                            onChange={e => setParams({...params, mngBonusPct: parseFloat(e.target.value)||0})} />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Label className="text-xs text-muted-foreground mb-1 block"><FormattedMessage id="config.mngBonusExcludedMonths" /></Label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m, i) => {
+                      const monthNum = i + 1;
+                      const checked = mngBonusExcludedMonths.includes(monthNum);
+                      return (
+                        <label key={m} className={`flex items-center gap-1 px-2 py-1 rounded text-xs cursor-pointer border ${checked ? 'bg-amber-100 border-amber-300 text-amber-800' : 'bg-muted/30 border-border'}`}>
+                          <input type="checkbox" checked={checked} onChange={() => {
+                            const next = checked
+                              ? mngBonusExcludedMonths.filter(n => n !== monthNum)
+                              : [...mngBonusExcludedMonths, monthNum].sort((a, b) => a - b);
+                            setMngBonusExcludedMonths(next);
+                          }} className="sr-only" />
+                          {m}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+                <Button size="sm" className="mt-4" onClick={saveMngBonus}>
+                  <Save className="size-3.5 mr-1" /> <FormattedMessage id="config.save" />
+                </Button>
+                {savedMngBonus === 'ok' && <span className="text-sm text-emerald-600 ml-2"><FormattedMessage id="config.saved" /></span>}
+              </CardContent>
+            </Card>
+
+            {/* Card SS Benefits */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base"><FormattedMessage id="config.cardSsBenefits" /></CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div>
+                    <Label><FormattedMessage id="config.ssRate" /></Label>
+                    <Input type="number" step="0.0001" value={params.ssRate}
+                           onChange={e => setParams({...params, ssRate: parseFloat(e.target.value)||0})} />
                   </div>
                   <div>
                     <Label><FormattedMessage id="config.insuranceMonths" /></Label>
@@ -355,39 +517,138 @@ export default function ConfigPage() {
                     <Input type="number" value={params.mealCardDays}
                            onChange={e => setParams({...params, mealCardDays: parseInt(e.target.value)||0})} />
                   </div>
+                </div>
+                <Button size="sm" className="mt-4" onClick={async () => {
+                  await saveFiscalSetting('ss_rate', String(params.ssRate));
+                  await saveFiscalSetting('insurance_months', String(params.insuranceMonths));
+                  await saveFiscalSetting('meal_card_days', String(params.mealCardDays));
+                  setSavedFiscal('ssbenefits');
+                  setTimeout(() => setSavedFiscal(''), 3000);
+                }}>
+                  <Save className="size-3.5 mr-1" /> <FormattedMessage id="config.save" />
+                </Button>
+                {savedFiscal === 'ssbenefits' && <span className="text-sm text-emerald-600 ml-2"><FormattedMessage id="config.saved" /></span>}
+              </CardContent>
+            </Card>
+
+            {/* Family Thresholds */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base"><FormattedMessage id="config.familyThresholds" /></CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/30">
+                        <th className="text-left p-2 text-xs"><FormattedMessage id="config.conceptName" /></th>
+                        <th className="text-right p-2 text-xs"><FormattedMessage id="common.amount" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { key: 'personalMinimum', label: intl.formatMessage({ id: 'config.personalMinimum' }), value: params.personalMinimum },
+                        { key: 'deductionSpouse', label: intl.formatMessage({ id: 'config.deductionSpouse' }), value: params.deductionSpouse },
+                        { key: 'deductionChild', label: intl.formatMessage({ id: 'config.deductionChild' }), value: params.deductionChild },
+                        { key: 'deductionAsc', label: intl.formatMessage({ id: 'config.deductionAsc' }), value: params.deductionAsc },
+                        { key: 'deductionDis', label: intl.formatMessage({ id: 'config.deductionDis' }), value: params.deductionDis },
+                        { key: 'lirpfExpenses', label: intl.formatMessage({ id: 'config.lirpfExpenses' }), value: lirpfExpenses },
+                      ].map((row) => (
+                        <tr key={row.key} className="border-b">
+                          <td className="p-2 text-sm">{row.label}</td>
+                          <td className="p-1">
+                            <Input type="number" step="0.01" value={row.value} onChange={e => {
+                              if (row.key === 'lirpfExpenses') {
+                                setLirpfExpenses(parseFloat(e.target.value)||0);
+                              } else {
+                                setParams({...params, [row.key]: parseFloat(e.target.value)||0});
+                              }
+                            }} className="h-7 text-sm text-right w-32 ml-auto" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <Button size="sm" className="mt-4" onClick={saveFamilyThresholds}>
+                  <Save className="size-3.5 mr-1" /> <FormattedMessage id="config.save" />
+                </Button>
+                {savedFamily === 'ok' && <span className="text-sm text-emerald-600 ml-2"><FormattedMessage id="config.saved" /></span>}
+              </CardContent>
+            </Card>
+
+            {/* Position Tariff Alert */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base"><FormattedMessage id="config.positionTariffAlertPct" /></CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="max-w-xs">
+                  <Label><FormattedMessage id="config.positionTariffAlertPct" /></Label>
+                  <Input type="number" step="1" value={positionTariffAlertPct}
+                         onChange={e => setPositionTariffAlertPct(parseFloat(e.target.value)||0)} />
+                  <p className="text-xs text-muted-foreground mt-0.5"><FormattedMessage id="config.positionTariffAlertPctHint" /></p>
+                </div>
+                <Button size="sm" className="mt-4" onClick={saveTariffAlert}>
+                  <Save className="size-3.5 mr-1" /> <FormattedMessage id="config.save" />
+                </Button>
+                {savedTariffAlert === 'ok' && <span className="text-sm text-emerald-600 ml-2"><FormattedMessage id="config.saved" /></span>}
+              </CardContent>
+            </Card>
+
+            {/* Bonus Payouts */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base"><FormattedMessage id="config.cardBonusPayouts" /></CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
-                    <Label><FormattedMessage id="config.ssRate" /></Label>
-                    <Input type="number" step="0.0001" value={params.ssRate}
-                           onChange={e => setParams({...params, ssRate: parseFloat(e.target.value)||0})} />
+                    <Label><FormattedMessage id="config.tenureBonusAmount" /></Label>
+                    <Input type="number" value={tenureBonusAmount}
+                           onChange={e => setTenureBonusAmount(parseFloat(e.target.value)||0)} />
+                    <p className="text-xs text-muted-foreground mt-0.5"><FormattedMessage id="config.tenureBonusAmountHint" /></p>
                   </div>
-                   <div>
-                     <Label><FormattedMessage id="config.personalMinimum" /></Label>
-                     <Input type="number" value={params.personalMinimum}
-                            onChange={e => setParams({...params, personalMinimum: parseFloat(e.target.value)||0})} />
-                   </div>
-                 </div>
-                 <div className="grid grid-cols-2 gap-3 mt-3">
-                   <div>
-                     <Label><FormattedMessage id="config.ssTotalRate" /></Label>
-                     <Input type="number" step="0.0001" value={params.ssRate}
-                            onChange={e => setParams({...params, ssRate: parseFloat(e.target.value)||0})} />
-                   </div>
-                    <div>
-                      <Label><FormattedMessage id="config.lirpfExpenses" /></Label>
-                      <Input type="number" value={lirpfExpenses}
-                             onChange={e => setLirpfExpenses(parseFloat(e.target.value)||0)} />
-                    </div>
+                  <div>
+                    <Label><FormattedMessage id="config.tenureBonusMonths" /></Label>
+                    <Input type="number" value={tenureBonusMonths}
+                           onChange={e => setTenureBonusMonths(parseInt(e.target.value)||0)} />
+                    <p className="text-xs text-muted-foreground mt-0.5"><FormattedMessage id="config.tenureBonusMonthsHint" /></p>
                   </div>
-                  <div className="mt-3">
-                    <Label><FormattedMessage id="config.coefAlertThreshold" /></Label>
-                    <Input type="number" step="0.01" value={coefAlertThreshold}
-                           onChange={e => setCoefAlertThreshold(parseFloat(e.target.value)||0)} />
-                    <p className="text-xs text-muted-foreground mt-0.5"><FormattedMessage id="config.coefAlertThresholdHint" /></p>
+                  <div>
+                    <Label><FormattedMessage id="config.quarterlyBonusAmount" /></Label>
+                    <Input type="number" value={quarterlyBonusAmount}
+                           onChange={e => setQuarterlyBonusAmount(parseFloat(e.target.value)||0)} />
+                    <p className="text-xs text-muted-foreground mt-0.5"><FormattedMessage id="config.quarterlyBonusAmountHint" /></p>
                   </div>
-                  <Button size="sm" className="mt-4" onClick={saveParams}>
-                   <Save className="size-3.5 mr-1" /> <FormattedMessage id="config.saveEngineParams" />
-                 </Button>
-                {savedFiscal === 'params' && <span className="text-sm text-emerald-600 ml-2"><FormattedMessage id="config.saved" /></span>}
+                </div>
+                <Button size="sm" className="mt-4" onClick={saveBonusPayouts}>
+                  <Save className="size-3.5 mr-1" /> <FormattedMessage id="config.save" />
+                </Button>
+                {savedBonusPayout === 'ok' && <span className="text-sm text-emerald-600 ml-2"><FormattedMessage id="config.saved" /></span>}
+              </CardContent>
+            </Card>
+
+            {/* Coef Alert Threshold */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base"><FormattedMessage id="config.cardThresholds" /></CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="max-w-xs">
+                  <Label><FormattedMessage id="config.coefAlertThreshold" /></Label>
+                  <Input type="number" step="0.01" value={coefAlertThreshold}
+                         onChange={e => setCoefAlertThreshold(parseFloat(e.target.value)||0)} />
+                  <p className="text-xs text-muted-foreground mt-0.5"><FormattedMessage id="config.coefAlertThresholdHint" /></p>
+                </div>
+                <Button size="sm" className="mt-4" onClick={async () => {
+                  await saveFiscalSetting('coef_alert_threshold', String(coefAlertThreshold));
+                  setSavedFiscal('threshold');
+                  setTimeout(() => setSavedFiscal(''), 3000);
+                }}>
+                  <Save className="size-3.5 mr-1" /> <FormattedMessage id="config.save" />
+                </Button>
+                {savedFiscal === 'threshold' && <span className="text-sm text-emerald-600 ml-2"><FormattedMessage id="config.saved" /></span>}
               </CardContent>
             </Card>
 
@@ -544,6 +805,155 @@ export default function ConfigPage() {
             </Card>
 
 
+
+          </div>
+        </TabsContent>
+
+        <TabsContent value="maintenance">
+          <div className="space-y-6">
+
+            {/* Encrypted Backups */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base"><Download className="size-4 inline mr-1" /> Encrypted Backups</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground">Create and restore encrypted database snapshots.</p>
+                <div className="flex gap-2">
+                  <Button onClick={async () => {
+                    try { await createBackup(); setBackupMsg('Backup created'); loadBackups(); } catch (e: any) { setBackupMsg(e.message); }
+                    setTimeout(() => setBackupMsg(''), 3000);
+                  }}><Download className="size-3.5 mr-1" /> Create Backup</Button>
+                </div>
+                <div className="overflow-auto max-h-48">
+                  <table className="w-full text-xs">
+                    <thead><tr className="bg-muted/50">{['Filename','Size','Date'].map(h => <th key={h} className="text-left p-1.5">{h}</th>)}</tr></thead>
+                    <tbody>
+                      {backups.filter(b => b.filename.startsWith('app.db.enc.')).map((b, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="p-1.5 font-mono text-[10px]">{b.filename}</td>
+                          <td className="p-1.5">{(b.size / 1024).toFixed(0)} KB</td>
+                          <td className="p-1.5">{new Date(b.createdAt).toLocaleDateString()}</td>
+                          <td className="p-1.5">
+                            <Button variant="outline" size="sm" className="h-6 text-[10px]"
+                              onClick={async () => {
+                                setPendingConfirm({
+                                  title: 'Restore Backup',
+                                  message: `Restore ${b.filename}? Current data will be replaced.`,
+                                  onConfirm: async () => { await restoreBackup(b.filename); setBackupMsg('Restored'); setTimeout(() => setBackupMsg(''), 3000); }
+                                });
+                              }}>Restore</Button>
+                          </td>
+                        </tr>
+                      ))}
+                      {backups.filter(b => b.filename.startsWith('app.db.enc.')).length === 0 && (
+                        <tr><td colSpan={4} className="p-3 text-center text-muted-foreground">No backups yet</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <Button variant="outline" size="sm" onClick={loadBackups}>Refresh List</Button>
+                {backupMsg && <p className="text-sm text-emerald-600">{backupMsg}</p>}
+              </CardContent>
+            </Card>
+
+            {/* Dump Backups */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base"><Upload className="size-4 inline mr-1" /> SQL Dump Backups</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground">Password-protected SQL dump (preserves users on restore).</p>
+                <div className="flex gap-2 items-end">
+                  <div>
+                    <Label>Password</Label>
+                    <Input type="password" value={dumpPw} onChange={e => setDumpPw(e.target.value)} className="h-8 w-40" />
+                  </div>
+                  <div>
+                    <Label>Confirm</Label>
+                    <Input type="password" value={dumpPw2} onChange={e => setDumpPw2(e.target.value)} className="h-8 w-40" />
+                  </div>
+                  <Button onClick={async () => {
+                    if (!dumpPw || dumpPw !== dumpPw2) { setBackupMsg('Passwords must match'); return; }
+                    if (dumpPw.length < 4) { setBackupMsg('Min 4 characters'); return; }
+                    try { await createDumpBackup(dumpPw); setBackupMsg('Dump backup created'); setDumpPw(''); setDumpPw2(''); loadBackups(); } catch (e: any) { setBackupMsg(e.message); }
+                    setTimeout(() => setBackupMsg(''), 3000);
+                  }}>Create Dump</Button>
+                </div>
+                <div className="overflow-auto max-h-48">
+                  <table className="w-full text-xs">
+                    <thead><tr className="bg-muted/50">{['Filename','Size','Date',''].map(h => <th key={h} className="text-left p-1.5">{h}</th>)}</tr></thead>
+                    <tbody>
+                      {backups.filter(b => b.filename.startsWith('app.db.dump.')).map((b, i) => (
+                        <tr key={i} className="border-t">
+                          <td className="p-1.5 font-mono text-[10px]">{b.filename}</td>
+                          <td className="p-1.5">{(b.size / 1024).toFixed(0)} KB</td>
+                          <td className="p-1.5">{new Date(b.createdAt).toLocaleDateString()}</td>
+                          <td className="p-1.5">
+                            <div className="flex gap-1">
+                              <Input type="password" placeholder="Pw" className="h-6 w-20 text-[10px]"
+                                onChange={e => setRestorePw(e.target.value)} />
+                              <Button variant="outline" size="sm" className="h-6 text-[10px]"
+                                onClick={async () => {
+                                  if (!restorePw) { setBackupMsg('Password required'); return; }
+                                  try { await restoreDumpBackup(b.filename, restorePw); setBackupMsg('Dump restored'); } catch (e: any) { setBackupMsg(e.message); }
+                                  setTimeout(() => setBackupMsg(''), 3000);
+                                }}>Restore</Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {backups.filter(b => b.filename.startsWith('app.db.dump.')).length === 0 && (
+                        <tr><td colSpan={4} className="p-3 text-center text-muted-foreground">No dump backups yet</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="border-t pt-4 mt-2">
+                  <p className="text-sm font-medium mb-2">Restore from file</p>
+                  <div className="space-y-2">
+                    <Button variant="outline" size="sm" onClick={dump.chooseDumpFile} className="w-full justify-start text-xs">
+                      <Upload className="size-3.5 mr-2" />
+                      {dump.dumpUploadFile ? dump.dumpUploadFile.name : 'Choose backup file (app.db.dump.*)'}
+                    </Button>
+                    <Input type="password" placeholder="Backup password" className="h-8 text-xs"
+                           value={dump.dumpUploadPassword}
+                           onChange={e => dump.setDumpUploadPassword(e.target.value)} />
+                    <Button size="sm" onClick={dump.uploadAndRestore}
+                            disabled={!dump.dumpUploadFile || !dump.dumpUploadPassword} className="w-full">
+                      {dump.uploadingDump ? <Loader2 className="size-3 animate-spin mr-1" /> : null}
+                      Upload & Restore
+                    </Button>
+                    {dump.dumpUploadError && <p className="text-xs text-red-600">{dump.dumpUploadError}</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Prune */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base"><Database className="size-4 inline mr-1" /> Prune Database</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground">Delete all business data (consultants, settings, concepts, bonuses) but keep user accounts.</p>
+                <Button variant="destructive" disabled={pruning} onClick={() => {
+                  setPendingConfirm({
+                    title: 'Prune Database',
+                    message: 'This will delete all consultants, settings, concepts, and bonuses. Users will be preserved. This cannot be undone.',
+                    onConfirm: async () => {
+                      setPruning(true);
+                      try { await pruneDatabase(); setBackupMsg('Database pruned'); } catch (e: any) { setBackupMsg(e.message); }
+                      setPruning(false);
+                      setTimeout(() => setBackupMsg(''), 3000);
+                    },
+                  });
+                }}>
+                  <Trash2 className="size-3.5 mr-1" /> Prune Business Data
+                </Button>
+                {backupMsg && <p className="text-sm text-emerald-600">{backupMsg}</p>}
+              </CardContent>
+            </Card>
 
           </div>
         </TabsContent>

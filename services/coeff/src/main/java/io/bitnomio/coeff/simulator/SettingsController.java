@@ -36,14 +36,15 @@ public class SettingsController {
         return jdbi.withHandle(h -> h.createQuery("SELECT key, value FROM settings ORDER BY key").mapToMap().list());
     }
 
+    public record SettingsUpsert(String key, String value) {}
+
     @PUT @Path("/settings")
-    public void upsert(Value body) {
-        var key = body.get("key").value();
-        var value = body.get("value").value();
+    public Map<String, String> upsert(SettingsUpsert body) {
         jdbi.useHandle(h -> h.createUpdate(
             "INSERT INTO settings (key, value, updated_at) VALUES (:key, :value, datetime('now')) " +
             "ON CONFLICT(key) DO UPDATE SET value = :value, updated_at = datetime('now')")
-            .bind("key", key).bind("value", value).execute());
+            .bind("key", body.key()).bind("value", body.value()).execute());
+        return Map.of("ok", "true");
     }
 
     @GET @Path("/fiscal")
@@ -71,14 +72,17 @@ public class SettingsController {
             .mapTo(String.class).findOne().orElse(null));
     }
 
+    public record FiscalUpsert(String value) {}
+
     @PUT @Path("/fiscal/{key}")
-    public void upsertFiscal(@PathParam String key, Value body) {
+    public Map<String, String> upsertFiscal(@PathParam String key, FiscalUpsert body) {
         jdbi.useHandle(h -> h.createUpdate(
             "INSERT INTO settings (key, value, updated_at) VALUES (:key, :value, datetime('now')) " +
             "ON CONFLICT(key) DO UPDATE SET value = :value, updated_at = datetime('now')")
             .bind("key", "fiscal." + key)
-            .bind("value", body.get("value").value())
+            .bind("value", body.value())
             .execute());
+        return Map.of("ok", "true");
     }
 
     @GET @Path("/fiscal/working-days")

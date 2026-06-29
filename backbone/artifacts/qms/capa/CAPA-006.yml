@@ -1,0 +1,11 @@
+# Corrective Action — CAPA-006
+# Created: 2026-06-27
+id: "CAPA-006"
+ncr: "NCR-006"
+status: closed
+owner: dev
+due: "2026-06-27"
+root_cause: "Javalin-created consultants table lacks created_at/updated_at columns. migrateSchema() ALTER TABLE with NOT NULL DEFAULT fails silently (Exception ignored) on non-empty tables after dump restore. JDBI ConstructorMapper requires these columns to exist."
+action_plan: "Mark createdAt and updatedAt parameters in ConsultantRow as @Nullable so JDBI tolerates missing columns. These columns have DB-level DEFAULT (datetime('now')) so new rows will populate automatically. Backfill via Flyway V2 migration in follow-up."
+verification: "ConsultantRow createdAt/updatedAt marked @Nullable with javax.annotation.Nullable. ALTER TABLE NOT NULL changed to DEFAULT-only for SQLite compatibility."
+closed_date: "2026-06-27"

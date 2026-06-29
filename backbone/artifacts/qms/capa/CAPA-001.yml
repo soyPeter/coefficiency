@@ -1,0 +1,13 @@
+# Corrective Action — CAPA-001
+# Created: 2026-06-22
+# References: NCR-001
+
+id: "CAPA-001"
+ncr_ref: "NCR-001"
+date: "2026-06-22"
+owner: "dev"
+due_date: "2026-07-22"
+root_cause: "Auto-generated from NCR: FileImportController raw body vs FormData mismatch -- upload broken"
+action_plan: "To be determined"
+status: closed
+verification: "Fixed: FileImportController now uses @FormParam FileUpload with file extension validation and 2MB limit. Frontend FormData matches backend."

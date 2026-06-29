@@ -6,12 +6,14 @@ flyway = "11.6.0"
 postgresql = "42.7.5"
 sqlite = "3.49.1.0"
 junit = "5.12.2"
+junit-platform = "1.12.2"
 mockito = "5.17.0"
 testcontainers = "1.20.6"
 jackson = "2.18.3"
 logback = "1.5.18"
 logstash = "9.0"
 assertj = "3.27.6"
+jbcrypt = "0.4"
 shadow = "9.4.1"
 
 [libraries]
@@ -55,9 +57,11 @@ jooby-redoc = { module = "io.jooby:jooby-redoc", version.ref = "jooby" }
 
 # Testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+jbcrypt = { module = "org.mindrot:jbcrypt", version.ref = "jbcrypt" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 
@@ -112,7 +116,8 @@ coeff-core = [
   "jdbi-sqlobject",
   "sqlite-jdbc",
   "logback-classic",
-  "logstash-logback-encoder"
+  "logstash-logback-encoder",
+  "jbcrypt"
 ]
 
 coeff-openapi = [
@@ -123,6 +128,7 @@ coeff-openapi = [
 
 coeff-testing = [
   "junit-jupiter",
+  "junit-platform-launcher",
   "mockito-core",
   "mockito-junit-jupiter",
   "assertj-core"

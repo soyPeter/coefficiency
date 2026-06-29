@@ -1,10 +1,11 @@
 .DS_Store
+.env
 .gradle/
+.venv/
+*.hprof
 build/
 data/
-logs/
-*.hprof
-node_modules/
 dist/
-.env
-.venv/
+logs/
+node_modules/
+services/coeff/node/

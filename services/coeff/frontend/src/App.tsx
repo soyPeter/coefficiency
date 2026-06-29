@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';
 import { HelmetProvider } from 'react-helmet-async';
 import { AppRouting } from '@/routing/app-routing';
 import LoginPage, { hasValidToken, clearToken } from '@/pages/LoginPage';
+import SetupWizardPage from '@/pages/SetupWizardPage';
 import { detectLocale, getMessages, type Locale } from '@/i18n/messages';
 import { useIdleTimer } from '@/hooks/useIdleTimer';
 import AutoLogoutDialog from '@/components/AutoLogoutDialog';
@@ -70,7 +72,12 @@ export function App() {
             />
           </>
         ) : (
-          <LoginPage onLogin={handleLogin} />
+          <HashRouter>
+            <Routes>
+              <Route path="/setup" element={<SetupWizardPage onComplete={handleLogin} />} />
+              <Route path="*" element={<LoginPage onLogin={handleLogin} />} />
+            </Routes>
+          </HashRouter>
         )}
       </HelmetProvider>
     </IntlProvider>

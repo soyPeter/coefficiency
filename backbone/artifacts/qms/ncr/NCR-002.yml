@@ -1,0 +1,14 @@
+# Nonconformance Report — NCR-002
+# Created: 2026-06-22
+
+id: "NCR-002"
+date: "2026-06-22"
+title: "AdminController hardcoded paths bypass dbDir() utility"
+severity: critical
+category: code
+source: review
+description: "AdminController hardcoded paths bypass dbDir() utility"
+status: closed
+closed_date: "2026-06-23"
+resolution: "AdminController.resetDatabase() now reads System.getProperty('coeff.data.dir') instead of hardcoded paths. Unused AuthController dependency removed."
+

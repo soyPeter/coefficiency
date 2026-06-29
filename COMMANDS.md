@@ -18,9 +18,11 @@ Step 1: /backbone:design <name>              <-- ONCE per feature
             G→P gate     R→D gate     D→I gate     P→T gate
         Use --plan for lightweight, --amend CHNG-XXX to amend
 
-Step 2: /backbone:task [--quick]             <-- ONCE per task (N times)
+Step 2: /backbone:task [--quick|--loop 30m --goal "tests pass"]
+                                             <-- ONCE per task (N times)
         └── Loads layer skill → TDD cycle → REQ- tagging → Traceability update → Commit → Review
             I→V gate
+        Use --loop <cadence> --goal <condition> for unattended automation (loop mode)
 
 Step 3: /backbone:review [--depth quick|standard|deep]
         └── Tests → Build → Security → Traceability → Docs
@@ -119,8 +121,9 @@ List all available backbone commands with descriptions and key flags.
 ### `/backbone:task`
 
 Guide the implementation of a single task from 3-TASKS.md with the correct layer skills loaded.
+Also supports unattended loop mode for automated, repeatable tasks.
 
-**Arguments:** `/backbone:task [--quick] [--light] [--deep]`
+**Arguments:** `/backbone:task [--quick] [--light] [--deep] [--loop <cadence>] [--goal <condition>] [--parallel] [--interactive] [--compact]`
 
 **Auto-detects:**
 - **Framework** from [`backbone/4-KNOWLEDGE.md`](backbone/4-KNOWLEDGE.md)
@@ -135,7 +138,7 @@ Guide the implementation of a single task from 3-TASKS.md with the correct layer
 | `app/` | Framework CDI/patterns skill | Same |
 | `infra/` | Framework REST/patterns skill | `jpa-patterns` (if DB), `outbox-pattern` (if messaging) |
 
-**Workflow:**
+**Workflow (single mode):**
 1. Read task context from proposal + design docs
 2. Load the right skills for the layer
 3. TDD cycle: write test (red) → implement (green) → refactor
@@ -145,12 +148,23 @@ Guide the implementation of a single task from 3-TASKS.md with the correct layer
 7. Run `/backbone:review` to verify
 8. Mark task [x] in 3-TASKS.md
 
+**Loop mode (`--loop <cadence> --goal <condition>`):**
+Unattended automation that runs on a cadence until an objective condition is met, checked by a separate verifier subagent (maker/checker split).
+
+Cadence values: `30m`, `1h` (session-scoped), `nightly` (scheduled), `pr` (event-triggered), `monitor` (file-watch).
+Each loop creates STATE.md in `.backbone/state/` that persists across runs. Hard stop at 10 iterations.
+
 **Flags:**
 - `--quick` — Lightweight: skips deep verification, runs fast checks only.
 - `--light` — Override mode to light: skip QMS checks.
 - `--deep` — Override mode to full: extra validation, cross-file analysis.
+- `--parallel` — Wave-based parallel execution for batch tasks.
+- `--interactive` — Sequential with user checkpoints.
+- `--loop <cadence>` — Enable unattended loop mode at the given cadence.
+- `--goal <condition>` — Stop condition verified by separate subagent.
+- `--compact` — Enable caveman output compression (~65%).
 
-**When to use:** After `/backbone:design` created the tasks. Run once per task.
+**When to use:** After `/backbone:design` created the tasks. Run once per task. Use `--loop` + `--goal` for automated maintenance tasks.
 
 **Source:** `.claude/commands/backbone/task.md`
 

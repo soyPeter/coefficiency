@@ -6,6 +6,7 @@ import BillingSummaryPage from '@/pages/BillingSummaryPage';
 import ClientsPage from '@/pages/ClientsPage';
 import FileImportPage from '@/pages/FileImportPage';
 import DocsPage from '@/pages/DocsPage';
+import ReportsPage from '@/pages/ReportsPage';
 
 export function AppRouting() {
   return (
@@ -17,6 +18,7 @@ export function AppRouting() {
           <Route path="/consultants" element={<ConsultantsPage />} />
           <Route path="/clients" element={<ClientsPage />} />
           <Route path="/import" element={<FileImportPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
           <Route path="/config" element={<ConfigPage />} />
           <Route path="/docs" element={<DocsPage />} />
         </Route>

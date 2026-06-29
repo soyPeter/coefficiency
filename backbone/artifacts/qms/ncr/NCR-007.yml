@@ -1,0 +1,10 @@
+# Nonconformance Report — NCR-007
+# Created: 2026-06-27
+id: "NCR-007"
+date: "2026-06-27"
+title: "Clients tab fails after old dump import — v_client_financials view missing"
+severity: minor
+category: code
+source: incident
+description: "Flyway baselines V1 without executing it against the restored database. The CREATE VIEW statements for v_client_financials and v_position_profitability are never created. Added CREATE VIEW to migrateSchema() fallback. Also fixed ALTER TABLE NOT NULL DEFAULT failures on non-empty tables."
+status: closed
