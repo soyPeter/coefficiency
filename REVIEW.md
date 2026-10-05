@@ -282,4 +282,4 @@ No test files were found in `src/test/java/`, `src/intTest/java/`, or `frontend/
 
 ---
 
-*See `docs/project/architecture.md` for the architecture rules referenced in this review. Open items are tracked in `TASKS.md` (M6).*
+*See `backbone/4-KNOWLEDGE.md` and `backbone/2-PLANNING.md` for the architecture rules referenced in this review. Open items are tracked in `backbone/3-TASKS.md` (M6).*
