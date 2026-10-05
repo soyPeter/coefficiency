@@ -13,3 +13,4 @@ ADR-003 to ADR-007 were migrated from the old decision log (D-008 to D-012) on 2
 | [ADR-005](adr/ADR-005-bonus-breakdown-frontend-only.md) | Bonus breakdown as a frontend-only integration (was D-010) | Accepted | before 2026-10-05 |
 | [ADR-006](adr/ADR-006-m6-input-validation-and-constants.md) | Simulator input validation, defaults, constants and English i18n keys (was D-011) | Accepted | before 2026-10-05 |
 | [ADR-007](adr/ADR-007-flyway-for-all-schema-changes.md) | All schema changes go through Flyway (was D-012) | Accepted | before 2026-10-05 |
+| [ADR-008](adr/ADR-008-local-decision-provider.md) | Local ollama decision provider in shadow mode for commit messages | Accepted | 2026-10-05 |
