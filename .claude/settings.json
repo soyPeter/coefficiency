@@ -10,10 +10,7 @@
       "Write(src/**)",
       "Write(tests/**)",
       "Write(scripts/**)",
-      "Write(backbone/**)",
-      "Write(dev-portal/**)",
       "Write(templates/**)",
-      "Bash(__BUILD_TOOL__ *)",
       "Bash(podman-compose *)",
       "Bash(podman *)",
       "Bash(psql *)",
@@ -34,8 +31,7 @@
       "Bash(mv *)",
       "Bash(touch *)",
       "Bash(cat *)",
-      "Bash(find *)",
-      "Bash(.claude/hooks/*)"
+      "Bash(find *)"
     ],
     "deny": [
       "Read(**/.env*)",
@@ -64,161 +60,6 @@
       "Bash(wget *)",
       "Bash(chmod *)",
       "Bash(chown *)"
-    ]
-  },
-  "agents": {
-    "default": "backbone-developer"
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/pre-bash-safety-check.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Task",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-subagent-conflict-check.sh",
-            "timeout": 5,
-            "statusMessage": "Checking subagent conflicts..."
-          }
-        ]
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-wip-check.sh",
-            "timeout": 5,
-            "statusMessage": "Checking WIP policy..."
-          },
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/review-gate-check.sh",
-            "timeout": 5,
-            "statusMessage": "Checking review gates..."
-          },
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-rd-gate.sh",
-            "timeout": 5,
-            "statusMessage": "Checking PRD\u2192Design gate..."
-          },
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-grill-check.sh",
-            "timeout": 5,
-            "statusMessage": "Checking grill evidence..."
-          },
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-task-granularity-check.sh",
-            "timeout": 5,
-            "statusMessage": "Checking task granularity..."
-          },
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/pre-tool-use-conventions-check.sh",
-            "timeout": 5,
-            "statusMessage": "Checking conventions read..."
-          },
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/claude/hooks/check-conventions.sh",
-            "timeout": 10,
-            "statusMessage": "\ud83d\udd0d Checking project conventions..."
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/session-start-workflow-check.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/session-start-drift-check.sh"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/stop-wip-check.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/claude/hooks/check-dod.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/post-commit-dod-reminder.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/post-edit-layer-check.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/post-write-scaffold-check.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Write.*backbone/decisions|Write.*backbone/prd|Write.*backbone/tasks|Write.*backbone/changes|Write.*5-DECISIONS|Write.*1-PRD|Write.*3-TASKS|Write.*proposal\\.md|Write.*design\\.md|Write.*tasks\\.md",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash $HOME/.backbone/scripts/hooks/post-doc-check.sh",
-            "timeout": 10,
-            "statusMessage": "Checking documentation sync..."
-          }
-        ]
-      }
     ]
   },
   "mcpServers": {
