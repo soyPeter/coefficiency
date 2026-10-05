@@ -87,12 +87,12 @@
     "scripts/harness/catalog/java/install/.claude/skills/java/concurrency.md": "d9678a2d9aee843423e2b5dd258ff1760be3c5045fe2698b679234958f95fc89",
     "scripts/harness/catalog/java/install/.claude/skills/java/java25-features.md": "b2e33bcc473aa0072f1d401c8004e6a61db818f1c285ce9cb4850d933bd0423c",
     "scripts/harness/catalog/java/install/.claude/skills/java/performance.md": "445bfdf6921ff6eca92e98a4bda02f27f9f499f6237e58120016faa676d2a184",
-    "scripts/harness/catalog/java/options/junit5-assertj/guardrails.conf": "54d2b591c0f967528fa6b9c6cfabf494e5b533565c7eacb17a4bf56c796413db",
+    "scripts/harness/catalog/java/options/junit5-assertj/guardrails.conf": "fc5b806916fa950cbda2b79a65bb28faa3acf1b894ce7727b3b17f40bd2472a7",
     "scripts/harness/catalog/java/options/junit5-assertj/install/.claude/skills/java-test/SKILL.md": "7429a1068b3601fd6eee7f53db2e546bbaaa06ee5b46189dcd610c55a98bdc0c",
     "scripts/harness/catalog/java/options/junit5-assertj/install/.claude/skills/java-test/assertj.md": "7e2403979bd4520d6abc8269467ae0e3d95f1cb84694d27dd59d9c3d49f6ce45",
-    "scripts/harness/catalog/java/options/junit5-assertj/routing.conf": "65403455eee76a0cf533aa0b807d093024e8fa22a1893bb63ed6962455203f10",
+    "scripts/harness/catalog/java/options/junit5-assertj/routing.conf": "6ce001587371b2c0f2c9f20f4179eb78f22473c1531c8d38084a5558539d5b7d",
     "scripts/harness/catalog/java/options/no-lombok/guardrails.conf": "b22feb9e73f551ed733ef03c58d9f296ad5bd80f747de7750060080316d07930",
-    "scripts/harness/catalog/java/pack.json": "b7248b87f5d61ea2465e35285d6749f23ff985435d4048c9ac2927cfe7ef78e9",
+    "scripts/harness/catalog/java/pack.json": "46ce7d210053ed5febbfa88e544a6fa0ae0641e7726b5256dbb7e02273ce7b9c",
     "scripts/harness/catalog/java/routing.conf": "128afd89f127ed4c28046bbb4396e9ad06d85ab6ec1956e5f8645bc0e8cdb434",
     "scripts/harness/catalog/jdbi/guardrails.conf": "c7564da6370cfee8d86dbf244a6913e19baad0a13b2bef05d7827e13a71324eb",
     "scripts/harness/catalog/jdbi/install/.claude/skills/jdbi/SKILL.md": "14378eeb0b782084fee8ae8a60472159ebab44c2ca6a9b849ce9d624fa8bdb5e",
@@ -125,7 +125,7 @@
     "scripts/harness/lib/harness.py": "b8c9e887bca56a5afa397efe71a91940dfda644fb11a5948302cecc8ab0647a9",
     "scripts/harness/routing.core.conf": "e590cf46c5bce825f0a0b44dc28f92ac42772a4801c1a782a6e31b7e1a487e07"
   },
-  "harness_version": "0.4.1",
+  "harness_version": "0.4.2",
   "installed": "2026-10-05",
   "updated": "2026-10-05"
 }

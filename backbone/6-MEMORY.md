@@ -16,6 +16,9 @@ Hard-won knowledge: traps, root causes and non-obvious lessons. Add a dated bull
 
 - 2026-10-05: The first harness scan found 33 existing rule violations (23 blocking): `Jdbi` in four controllers and five application services, 13 test files with JUnit assertions, seven empty catch blocks and hard-coded UI text in three pages. Each has a task (6.1, 6.11 to 6.13) or is migrated when touched. The old task list did not show the spread: 6.1 named the wrong features. Rerun `harness.py scan` after each refactor.
 
+- 2026-10-05: The first live define run (task 6.1, headless) found that `.gitignore` line 7 (`data/`) also ignores the source package `services/coeff/src/main/java/io/bitnomio/coeff/consultant/infra/data/`. That package is in no commit, so the repository as pushed does not compile. Restore it from the original machine and narrow the rule to `/data/` and `services/coeff/data/`.
+- 2026-10-05: Re-adopting a pack resets its `harness.conf` values: `HARNESS_TEST_PATHS` had to be restored afterwards (it adds `frontend/src` tests).
+
 ## Open questions and contradictions
 
 - 2026-10-05: The decision log started at D-008; D-001 to D-007 were not in the repository when it was migrated. If they matter, recover them from the old framework's history and add them as ADRs.

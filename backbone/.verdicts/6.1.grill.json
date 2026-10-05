@@ -1,0 +1,106 @@
+{
+  "task": "6.1",
+  "kind": "grill",
+  "history": [
+    {
+      "verdict": "fail",
+      "claimed": "fail",
+      "reasons": [
+        "griller verdict: fail",
+        "blocker question: Please answer Q1 to Q7: retitle the task, layering depth, keep current defects, duplicate fiscal routes, tests in this task, restore the missing package, and the test command. The analyst should then fold each answer into the spec and delete the Open questions entries.",
+        "blocker question: Can you restore services/coeff/src/main/java/io/bitnomio/coeff/consultant/infra/data/ (ConsultantRow, ListConsultantsQuery, SqliteConsultantQueryRepo, ConsultantSqlCommandRepo, dto) and narrow the root .gitignore rule 'data/' to '/data/' plus 'services/coeff/data/', as a separate commit before 6.1 starts? If not, should REQ-6.1-6 and the consultant part of the design be removed from this spec?",
+        "blocker question: Split REQ-6.1-1. One requirement: no controller holds, receives or uses a JDBI type. Should the second clause ('controllers obtain data only through the service layer, including auth') be dropped, or kept with named interim exceptions? Today AuthController calls AuthRepository directly and holds SqliteConnection (which exposes jdbi()), FiscalController gets its data from SettingsController, and ConsultantController would call ListConsultantsQuery from infra/data/sql. All of these break that clause, yet AC-6.1-3 forbids any change to AuthController.",
+        "blocker question: Will you change HARNESS_TEST_CMD to './gradlew test intTest' (or ':services:coeff:test :services:coeff:intTest') before the build phase? Or should the endpoint tests go in src/test instead?",
+        "major question: Widen the static check so that hidden access also fails. For example, also match '\\bjdbi\\b', 'withHandle|useHandle|inTransaction', 'SettingsHelper', 'java\\.sql\\.' and 'DataSource' in controller files. Decide explicitly how AuthController's SqliteConnection field is handled: name it as an allowed exception, or fix it.",
+        "major question: Give concrete fixtures: the exact SimulatorInput JSON (for example grossAnnualSalary 30000 with a named category) and the exact settings rows. For AC-6.1-24, state that no 'fiscal.ss_config' row exists, or that the input's category matches none. For AC-6.1-23, require income high enough to reach at least the second IRPF bracket.",
+        "major question: Name the reference commit (for example the commit on which the task starts, or the characterization-test commit). Define the scan comparison as the set of (file, rule) pairs. Then either automate both checks in a test, or say explicitly that the judge runs them by hand and what evidence it records.",
+        "major question: Should 6.1 be split into (a) the endpoint characterization harness and tests, and (b) the refactor? Or should it be re-sized to [M]? Or should 9.3 and the consultant part of 9.2 be done first and reused here?",
+        "major question: Add a security NFR covering: values stay bound parameters (no SQL built by concatenation), no new data in responses or logs, and characterization tests that never fix a 500 body containing SQL or bound values as expected output. Should the existing leak (ExceptionMapper/CoeffConfig send cause.getMessage(), so a JDBI constraint failure returns SQL text and the bound values) go under Out of scope with a follow-up task?",
+        "spec: open questions remain: Q1 (task title): The title names auth, billing and client, which are already compliant; the remaining work is in `ConsultantController`, `SimulatorController`, `ConceptsController` and `SettingsController`. Should the task line in `3-TASKS.md` be retitled, for example to \"Task 6.1: Move Jdbi out of "
+      ],
+      "fingerprint": "4e41e34691c90ebb0ee5e1dfd04b5fbf8ecc4002f2aa00f455b48bea2a0a7889",
+      "at": "2026-10-05T16:01:37+0200",
+      "summary": "Fails on four blockers: open questions Q1-Q7 make the spec structurally invalid; the consultant persistence package is missing, so nothing compiles and the characterization tests cannot run; REQ-6.1-1 contradicts AC-6.1-3 (AuthController and FiscalController do not obtain data through a service); and the configured test command would not run the intTest suite. Majors: AC-6.1-1 can be passed by wrong code, the simulator ACs lack fixtures and AC-6.1-24 may not be deterministic, the pre-change reference is undefined, the task is too large for [S] and overlaps 9.2/9.3, and there is no security NFR despite a 500 body that leaks SQL. The refactor design itself is sound.",
+      "questions": [
+        {
+          "severity": "blocker",
+          "about": "Open questions Q1-Q7",
+          "question": "Please answer Q1 to Q7: retitle the task, layering depth, keep current defects, duplicate fiscal routes, tests in this task, restore the missing package, and the test command. The analyst should then fold each answer into the spec and delete the Open questions entries.",
+          "why": "spec-check reports the spec invalid ('open questions remain'), so the start gate will refuse it."
+        },
+        {
+          "severity": "blocker",
+          "about": "Q6 / REQ-6.1-6 / AC-6.1-25",
+          "question": "Can you restore services/coeff/src/main/java/io/bitnomio/coeff/consultant/infra/data/ (ConsultantRow, ListConsultantsQuery, SqliteConsultantQueryRepo, ConsultantSqlCommandRepo, dto) and narrow the root .gitignore rule 'data/' to '/data/' plus 'services/coeff/data/', as a separate commit before 6.1 starts? If not, should REQ-6.1-6 and the consultant part of the design be removed from this spec?",
+          "why": "ConsultantController and CoefJdbiFactory import those classes, so the service does not compile. The characterization tests cannot run against the pre-change build, and the planned ListConsultantsQuery.findById cannot be checked (interface or class, other implementers or fakes, soft-delete filtering in findAll)."
+        },
+        {
+          "severity": "blocker",
+          "about": "REQ-6.1-1 / AC-6.1-3",
+          "question": "Split REQ-6.1-1. One requirement: no controller holds, receives or uses a JDBI type. Should the second clause ('controllers obtain data only through the service layer, including auth') be dropped, or kept with named interim exceptions? Today AuthController calls AuthRepository directly and holds SqliteConnection (which exposes jdbi()), FiscalController gets its data from SettingsController, and ConsultantController would call ListConsultantsQuery from infra/data/sql. All of these break that clause, yet AC-6.1-3 forbids any change to AuthController.",
+          "why": "As written, the requirement contradicts its own AC and the out-of-scope list. An implementer must either break AC-6.1-3 or leave REQ-6.1-1 unmet, and the judge has no rule for deciding."
+        },
+        {
+          "severity": "blocker",
+          "about": "Q7 / harness.conf",
+          "question": "Will you change HARNESS_TEST_CMD to './gradlew test intTest' (or ':services:coeff:test :services:coeff:intTest') before the build phase? Or should the endpoint tests go in src/test instead?",
+          "why": "Only the user may set this. With the current './gradlew test', the judge never runs the tests behind AC-6.1-4 to AC-6.1-26. The intTest task also lacks useJUnitPlatform(), so it would run zero tests and still pass."
+        },
+        {
+          "severity": "major",
+          "about": "AC-6.1-1",
+          "question": "Widen the static check so that hidden access also fails. For example, also match '\\bjdbi\\b', 'withHandle|useHandle|inTransaction', 'SettingsHelper', 'java\\.sql\\.' and 'DataSource' in controller files. Decide explicitly how AuthController's SqliteConnection field is handled: name it as an allowed exception, or fix it.",
+          "why": "'var j = sqliteConnection.jdbi(); j.withHandle(h -> h.createQuery(...))' passes both the regex and the import guardrail ('jdbi' is lower case, and 'withHandle' has no word boundary before 'Handle'). The only automated proof of REQ-6.1-1 can therefore pass on a wrong implementation."
+        },
+        {
+          "severity": "major",
+          "about": "AC-6.1-22 / AC-6.1-23 / AC-6.1-24",
+          "question": "Give concrete fixtures: the exact SimulatorInput JSON (for example grossAnnualSalary 30000 with a named category) and the exact settings rows. For AC-6.1-24, state that no 'fiscal.ss_config' row exists, or that the input's category matches none. For AC-6.1-23, require income high enough to reach at least the second IRPF bracket.",
+          "why": "TaxEngine.calculateSS uses the ss_config category rate instead of fiscal.ss_rate when the category matches (TaxEngine.java:88-97), so 'the two results differ' depends on fixture choices the spec doesn't state. With zero income, AC-6.1-23 passes even if the bracket fallback is broken. AC-6.1-22 has no specific data at all."
+        },
+        {
+          "severity": "major",
+          "about": "AC-6.1-2 / AC-6.1-3 / judge trace",
+          "question": "Name the reference commit (for example the commit on which the task starts, or the characterization-test commit). Define the scan comparison as the set of (file, rule) pairs. Then either automate both checks in a test, or say explicitly that the judge runs them by hand and what evidence it records.",
+          "why": "'The pre-change commit' is ambiguous across the two-commit plan. The judge gate only traces AC ids in test files, so a comment naming AC-6.1-2 or AC-6.1-3 would satisfy the trace without proving anything."
+        },
+        {
+          "severity": "major",
+          "about": "Sizing [S] / overlap with 9.2 and 9.3",
+          "question": "Should 6.1 be split into (a) the endpoint characterization harness and tests, and (b) the refactor? Or should it be re-sized to [M]? Or should 9.3 and the consultant part of 9.2 be done first and reused here?",
+          "why": "The task now includes: a build change, a harness that boots CoeffApplication (the setup flow encrypts the DB and starts a periodic-sync thread, a JVM-global coeff.data.dir, seeding through a second Jdbi on the same file), about 25 endpoint ACs over 14 endpoints, two new services and a port change. That is more than one small review, and the harness is the core deliverable of 9.3."
+        },
+        {
+          "severity": "major",
+          "about": "NFRs / security",
+          "question": "Add a security NFR covering: values stay bound parameters (no SQL built by concatenation), no new data in responses or logs, and characterization tests that never fix a 500 body containing SQL or bound values as expected output. Should the existing leak (ExceptionMapper/CoeffConfig send cause.getMessage(), so a JDBI constraint failure returns SQL text and the bound values) go under Out of scope with a follow-up task?",
+          "why": "The security skill forbids SQL in error responses. AC-6.1-10 keeps a 500 whose body contains the INSERT statement and the arguments. The security points sit only in the Skills section, which the judge does not treat as requirements."
+        },
+        {
+          "severity": "minor",
+          "about": "Authorization abuse case",
+          "question": "Add one negative AC, for example: given no Authorization header, GET /api/concepts and POST /api/simulator/calculate return 401.",
+          "why": "Unauthorized access is the main abuse case for the refactored endpoints. The filter is path-based and unchanged, but nothing proves the new wiring keeps it."
+        },
+        {
+          "severity": "minor",
+          "about": "Tech requirements: SettingsService.find",
+          "question": "Reconcile 'move each statement verbatim' with routing getFiscal and workingDays through SettingsHelper.getSetting. workingDays currently uses the literal \"WHERE key = 'fiscal.workingDays'\", not a bound parameter.",
+          "why": "The behaviour is the same, but the two rules contradict each other, and the judge may flag either choice."
+        },
+        {
+          "severity": "minor",
+          "about": "Endpoint test harness",
+          "question": "State how the tests start and stop the app: a NettyServer with ServerOptions port 0 instead of the hard-coded 62226, the token from POST /api/auth/setup, app.stop so the periodic-sync executor shuts down, and IT classes run sequentially because coeff.data.dir is JVM-global. Use an obviously fake test password.",
+          "why": "These details decide whether the tests are reliable or hang. Leaving them to the implementer risks rework."
+        },
+        {
+          "severity": "minor",
+          "about": "Guardrails and routing for src/intTest",
+          "question": "Should the java-test route and the JUnit-assertion guardrail (path regex src/(test|integrationTest|native-test|it)/) be extended to src/intTest, or should this gap stay acknowledged in the spec?",
+          "why": "New intTest classes are not protected by the JUnit-assertion block rule, and the java-test skill is not routed to them."
+        }
+      ]
+    }
+  ]
+}
