@@ -49,7 +49,7 @@ Every task goes through four phases. You, the main session, are the **orchestrat
 ## 4. Task protocol
 
 - Tasks in `3-TASKS.md` are list lines: `- [ ] **Task <id>: <title>** (spec: backbone/specs/<id>.md)`. `[WIP]` goes on task lines only.
-- Only one task may be `[WIP]`. If another is already in progress, ask the user.
+- Only one task may be `[WIP]`. If another is already in progress, ask the user (in autonomous mode, resume it or escalate; section 7).
 - After `HARNESS_JUDGE_MAX_ROUNDS` judge fails, stop retrying and take the findings to the user.
 - To abandon a task, change its line back to `- [ ]` without rewording it.
 - A task is finished only when the Definition of Done in `8-WORKFLOW.md` is met, including the commit.
@@ -57,8 +57,8 @@ Every task goes through four phases. You, the main session, are the **orchestrat
 ## 5. Guardrails
 
 - Hooks block destructive commands, secrets, `backbone/guardrails.conf` violations, a second `[WIP]`, and every gate above. When something is blocked, fix the cause.
-- Never work around a hook. Don't use `--no-verify`, don't write files through the shell to avoid checks, and don't edit `backbone/.verdicts/`, `Approved-by:` lines or the user-only `HARNESS_*_GATE` settings.
-- Each agent may write only its own files. The hooks enforce this, so hand work to the right agent instead.
+- Never work around a hook. Don't use `--no-verify`, don't write files through the shell to avoid checks, and don't edit `backbone/.verdicts/`, `Approved-by:` lines, ADR acceptance or the user-only `harness.conf` settings. The hooks refuse these, and the pre-commit `verify` and CI re-check the resulting state.
+- Each agent may write only its own files, and the main session only `backbone/` docs and configuration, `.claude/skills/` and `CLAUDE.md`. The hooks enforce this, so hand work to the right agent instead.
 - If the user really wants a blocked command, ask them to run it themselves (in Claude Code: `! <command>`).
 - `backbone/HOOKS.md` describes every hook and gate.
 
@@ -71,3 +71,26 @@ Skills live in `.claude/skills/<name>/SKILL.md`:
 - **Project skills:** anything else the project needs. List them in `backbone/9-AGENT-SKILLS.md`.
 
 Routing decides which skills each path needs: `scripts/harness/routing.core.conf` and `backbone/routing.conf`, which includes the adopted packs' blocks. Each skill's **Linked skills** section says which skill to use next. Before relying on a skill, check its `applies-to` field against the stack in `4-KNOWLEDGE.md`. If it conflicts, ask the user.
+
+## 7. Autonomous mode
+
+When the user sets `HARNESS_AUTONOMY="autonomous"` (user-only), no human answers in the loop, and the session-start note says **AUTONOMOUS MODE**. Every "ask the user" above is replaced:
+
+| Supervised | Autonomous |
+|---|---|
+| Relay the griller's questions to the user | Have the analyst or architect answer them from `backbone/` (PRD, knowledge, conventions, ADRs, memory), recording each answer under the spec's **Assumptions** with its source. A question `backbone/` can't answer is escalated. `approve` refuses a spec whose griller asked questions while Assumptions is empty. |
+| The user adds `Approved-by:` | `python3 scripts/harness/lib/harness.py approve <id>`. The harness approves a valid, grilled spec only if it is low-risk; otherwise it escalates the task itself. |
+| The user accepts an ADR | A task on a Proposed ADR is escalated by `approve`; tasks on accepted ADRs go on. |
+| Judge fails `HARNESS_JUDGE_MAX_ROUNDS` times: ask the user | The judge's recorder escalates automatically; so does the griller's after `HARNESS_GRILL_MAX_ROUNDS` fails. |
+| Another task is `[WIP]`, or a command is blocked: ask the user | Escalate: `python3 scripts/harness/lib/harness.py escalate <id> --reason "<what and why>" --needed "<the decision>"` |
+
+An escalation parks the task: it leaves `[WIP]` with a `BLOCKED:` note and gets an entry in `backbone/escalations.md` (and a GitHub issue when `HARNESS_ESCALATE_GH="on"`). Then **continue with the next ready task**. Never wait for an answer, and never clear a `BLOCKED` note. Only the user does that, after resolving the entry.
+
+**Risk.** A spec is low-risk unless it mentions a `HARNESS_RISK_TERMS` term (authentication, secrets, payments, personal data, migrations, breaking or public API changes, ...), names a `HARNESS_RISK_PATHS` path, or references an ADR that isn't Accepted. A policy approval records the base commit. If the change later touches a sensitive path or more than `HARNESS_RISK_MAX_FILES` files, the judge gate refuses to finish the task until it is escalated. Check with `harness.py risk <id>`.
+
+**Runner.** The user or a scheduled job may drive tasks with `harness.py run`: one fresh session per task, with the prompt saying which task. Work only on that task, and end the session when it is `[x]` and committed, or BLOCKED. Never start the runner yourself.
+
+**Out-of-band changes.** Change protected files (`backbone/`, `scripts/harness/`, `.claude/`) only with the Write and Edit tools. A protected file that changes any other way, for example from a script, is detected after the command, and the task is escalated for review.
+
+**Kill switch.** While `.git/harness/STOP` exists, every tool call is refused and the Stop hook lets the session end. Report your state and stop. Only the user creates or removes the file.
+
