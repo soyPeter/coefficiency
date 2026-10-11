@@ -1,38 +1,26 @@
-<!-- VERSION: 2026.05.13#5-commandpipeline,16commandstotal -->
-# 6. Long-Term Memory
+# 6. Memory: coefficiency
 
-*This file contains critical context, lessons learned, patterns that worked, and traps to avoid.*
+Hard-won knowledge: traps, root causes and non-obvious lessons. Add a dated bullet under the right heading.
 
-## Patterns That Worked (Keep Using These)
+## Traps and pitfalls
 
-<!-- Add patterns that worked well for this project -->
+- (migrated) **Flyway + SQLite `ALTER TABLE`:** `ALTER TABLE ADD COLUMN` rejects non-constant defaults such as `DEFAULT (datetime('now'))`. Only constant defaults (`DEFAULT ''`, `DEFAULT 0`, other literals) are allowed. A column that needs a function default must be defined in the initial `CREATE TABLE` (V1), not added later.
+- (migrated) **`baselineOnMigrate(true)` skips V1:** when Flyway baselines a non-empty database (a restored dump), it marks V1 as applied without running it. Anything defined only in V1 (views, columns) is then missing. Add such elements in V2 or later, written to tolerate elements that already exist.
+- (migrated) **Migrations must work across both histories:** a migration that adds a column with `ALTER TABLE` fails if a newer V1 `CREATE TABLE` already has that column. Test every migration on a fresh database (V1 runs) and on a restored dump (V1 baselined).
+- (migrated) **Column additions that V1 may or may not have created** belong in the legacy `initSchema()` `ALTER TABLE` fallbacks (which skip duplicates), not in Flyway. Flyway migrations are best for additive `CREATE ... IF NOT EXISTS` changes (tables, views, indexes).
+- (migrated, ADR-003) **`@BindBean` cannot bind typed value objects** (`Coef`, `Tariff`, ...) to SQL `double` columns. Flatten them in a binding helper (`ConsultantBindings`) instead of registering global argument factories.
 
-## Lessons Learned & Traps to Avoid (Do Not Repeat)
+## Lessons learned
 
-- **Flyway + SQLite ALTER TABLE:** `ALTER TABLE ADD COLUMN` rejects non-constant defaults like `DEFAULT (datetime('now'))`. Only constant defaults (strings, numbers, `DEFAULT ''`, `DEFAULT 0`) are allowed. If a function default is needed, the column must be defined in the initial `CREATE TABLE` (Flyway V1), not added later via ALTER TABLE.
-- **baselineOnMigrate(true) skips V1 execution:** When Flyway baselines a non-empty database, it marks V1 as applied without running it. Any schema elements defined only in V1 (views, columns added via CREATE TABLE) will be missing. Use separate V2+ migrations to add elements that V1 would have created, or ensure the migration handles already-existing elements gracefully.
-- **Flyway migrations must be idempotent across migration history:** A migration that adds a column via ALTER TABLE will fail if a later version of V1's CREATE TABLE already includes that column. Test migrations against both fresh (V1 runs) and restored (V1 baselined, columns may be missing) databases.
-- **Don't put ALTER TABLE in Flyway migrations for columns that V1 may or may not have created:** Use the `initSchema()` ALTER TABLE fallbacks (which silently skip duplicates) for column additions that might conflict with V1. Flyway migrations are best for additive-only changes (new tables, views, indexes) that can use `CREATE IF NOT EXISTS`.
+- 2026-10-05: The project moved from the old Agentic Backbone framework to the agentic harness. Its tasks, PRDs, design and planning docs, decisions (now ADR-003 to ADR-007) and these lessons were carried over; the framework's hooks and scripts were removed.
 
-## Contextual Anchors
+- 2026-10-05: The first harness scan found 33 existing rule violations (23 blocking): `Jdbi` in four controllers and five application services, 13 test files with JUnit assertions, seven empty catch blocks and hard-coded UI text in three pages. Each has a task (6.1, 6.11 to 6.13) or is migrated when touched. The old task list did not show the spread: 6.1 named the wrong features. Rerun `harness.py scan` after each refactor.
 
-<!-- Add contextual anchors for this project -->
+- 2026-10-05: The first live define run (task 6.1, headless) found that `.gitignore` line 7 (`data/`) also ignores the source package `services/coeff/src/main/java/io/bitnomio/coeff/consultant/infra/data/`. That package is in no commit, so the repository as pushed does not compile. Restore it from the original machine and narrow the rule to `/data/` and `services/coeff/data/`.
+- 2026-10-05: Re-adopting a pack resets its `harness.conf` values: `HARNESS_TEST_PATHS` had to be restored afterwards (it adds `frontend/src` tests).
 
-## Project Context
+## Open questions and contradictions
 
-<!-- Add project-specific context that future agents need to know -->
-
----
-
-### How to Add Entries
-
-```markdown
-## [CATEGORY: Patterns / Lessons / Anchors]
-- **Item:** [Brief description]
-```
-
-Valid categories:
-- Patterns That Worked
-- Lessons Learned & Traps to Avoid
-- Contextual Anchors
-- Project Context
+- 2026-10-05: The decision log started at D-008; D-001 to D-007 were not in the repository when it was migrated. If they matter, recover them from the old framework's history and add them as ADRs.
+- 2026-10-05: Task 6.2 said controllers go under `infra/io/rest/`, while the architecture notes (now `2-PLANNING.md`) say `infra/rest/`. Settle it in the task's spec.
+- 2026-10-05: 13 existing test files use JUnit assertions, although new tests use AssertJ (ADR-002). They are migrated when touched; `harness.py scan` lists them.

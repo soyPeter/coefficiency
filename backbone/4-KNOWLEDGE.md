@@ -1,130 +1,45 @@
-<!-- VERSION: 2026.05.13#5-commandpipeline,16commandstotal -->
-# 4. Knowledge (Product Soul)
+# 4. Knowledge: coefficiency
 
-*This file describes THIS project — a software project built with the Agentic Backbone framework.*
+The rules of the road. Agents read this file before every task. Stack decisions: [ADR-002](adr/ADR-002-stack-and-architecture.md).
 
-## What This Project Is
+## Summary
+A single-user desktop tool for consultant profitability: consultants, clients, billing, a tax engine (IRPF + SS), COEF and bonus calculations, and reports. Jooby backend, React SPA, encrypted SQLite.
 
-This is a **jooby** software project scaffolded with Agentic Backbone. It includes:
-- Framework-specific conventions and best practices
-- AI agent guardrails and documentation standards
-- CI/CD, Docker, and deployment configurations
+## Tech stack
+- **Backend:** Java 21, Jooby 4.5 (Netty, MVC annotations, APT-generated `Controller_` classes), Avaje Inject 12 (compile-time DI and AOP), Jackson.
+- **Persistence:** SQLite (AES-256-GCM encrypted at rest), JDBI 3, Flyway migrations in `services/coeff/src/main/resources/db/migration`.
+- **Security:** HMAC-signed tokens, BCrypt passwords (migrated from SHA-256), CORS limited to localhost.
+- **Frontend:** React 19, TypeScript, Vite 7, TanStack Query and Table, i18n with English keys (EN and ES bundles).
+- **Build:** Gradle (Kotlin DSL, version catalog), Shadow fat jar that bundles the frontend; Checkstyle and SpotBugs.
+- **Tests:** JUnit 5, AssertJ, Mockito, Testcontainers (`intTest` source set).
 
-## Current Tech Stack
+## Design rules
+1. **Package by feature**, then layers: `domain/` (framework-free types and rules), `app/` (use cases and ports, no framework annotations), `infra/` (all framework code; REST controllers in `<feature>/infra/rest/`).
+2. **Services own data access.** Controllers never receive `Jdbi`; they call application services.
+3. **Typed value objects** (records such as `Money`, `Coef`, `Tariff`) instead of raw doubles in the domain. Persistence flattens them explicitly (ADR-003).
+4. **Explicit persistence:** class-based JDBI repositories with binding helpers; avoid JDBI framework magic such as global argument factories for value types (ADR-003).
+5. **Every schema change is a new Flyway migration** (`V<n>__<description>.sql`); never edit an applied one (ADR-007). Mind the SQLite constraints in `6-MEMORY.md`.
+6. **English-only identifiers** everywhere: classes, methods, variables, constants, packages, files, DB tables and columns, endpoints, environment variables, i18n keys. Comments may be bilingual. See `7-CONVENTIONS.md`.
+7. Input from the API is validated at the controller boundary (`BadRequestException` on violations).
 
-### Core Technologies
-- **Framework:** jooby
-- **Build Tool:** gradle
-- **Language:** See framework conventions for language details
+## NEVER DO
+- Never inject `Jdbi` into a controller (guardrail).
+- Never import Jooby, Jakarta, JDBI, Jackson or Avaje types in `domain/` (guardrail), or framework types in `app/` (guardrail).
+- Never use CDI or Jakarta EE APIs: no `@ApplicationScoped` (use `@Singleton`), no `@Produces` (use `@Factory` + `@Bean`), no `@Transactional` (handle transactions with the JDBI handle), no `@InterceptorBinding` (use Avaje `@Aspect`) (guardrail).
+- Never use JAX-RS annotations (`jakarta.ws.rs.*`); use `io.jooby.annotation.*` (guardrail).
+- Never register controllers with `mvc(Controller.class)`; use `mvc(new Controller_())` (guardrail).
+- Never use Lombok or JUnit assertions in new code (adopted `java` pack options, ADR-002).
+- Never use an ORM (JPA, Hibernate ORM, Panache) (adopted `jdbi` pack option, ADR-002).
+- Never commit secrets or `.env` files; CI runs `scripts/secret-scan.sh` and `scripts/base64-scan.sh`.
 
-### Architecture
+## Commands
+| Purpose | Command |
+|---|---|
+| Build | `./gradlew build` (compile, checks, unit tests); the pre-commit check runs `HARNESS_BUILD_CMD` |
+| Test | `./gradlew :services:coeff:test` (unit), `./gradlew :services:coeff:intTest` (integration, Testcontainers) |
+| Run locally | `./gradlew :services:coeff:run`; frontend dev server: `cd services/coeff/frontend && npm run dev` |
+| Frontend checks | `cd services/coeff/frontend && npm run lint` and `npx tsc --noEmit` |
+| Fat jar | `./gradlew :services:coeff:shadowJar` (builds the frontend first) |
+| Secret scan | `bash scripts/secret-scan.sh --staged` |
 
-Generated projects use **DDD / Hexagonal Architecture** with three layers:
-
-```
-<project-root>/
-├── backbone/              # Documentation, PRDs, plans, decisions
-│   ├── skills/           # AI agent skills (framework-specific patterns)
-│   ├── reference/        # Conventions, guides, patterns
-│   └── prd/              # Product requirement documents
-├── src/                  # Application source code
-│   ├── domain/          # Domain layer (entities, value objects, events)
-│   ├── app/             # Application layer (services, use cases, ports)
-│   └── infra/           # Infrastructure layer (ALL framework code)
-│       ├── io/rest/     # REST controllers, resources, routes
-│       ├── data/dto/    # Request/response DTOs
-│       ├── data/persistence/  # Repositories, database access
-│       └── config/      # Framework configuration
-├── scripts/             # Automation scripts
-│   └── hooks/          # Git hooks and agent hooks
-├── tests/               # Test suites
-└── .claude/             # Claude Code configuration (hooks, settings, agents)
-```
-
-**Layer rules:**
-- `domain/` — **Framework-free.** No Quarkus, Spring, Jakarta, or Lombok imports
-- `app/` — Use cases and ports (interfaces). No framework annotations
-- `infra/` — **All** framework code. REST controllers live in `infra/io/rest/`, not a separate top-level package
-
-## Universal Naming Convention (MANDATORY)
-
-**All identifiers MUST be in English.** This applies to every framework, every language, every file.
-
-| What | Rule | Good | Bad |
-|------|------|------|-----|
-| **Classes / Types** | PascalCase, English only | `UserController`, `OrderService` | `UsuarioControlador`, `CommandeService` |
-| **Methods / Functions** | camelCase, English only | `getAllMetrics()`, `parseCsv()` | `obtenerMetricas()`, `analyserFichier()` |
-| **Variables / Fields** | camelCase, English only | `metricCount`, `isActive` | `contadorMetricas`, `estActif` |
-| **Constants** | UPPER_SNAKE_CASE, English only | `MAX_RETRY_COUNT`, `DEFAULT_PORT` | `MAX_INTENTOS`, `PORT_PAR_DEFAUT` |
-| **Packages / Modules** | lowercase, English only | `io.bitnomio.metric` | `io.bitnomio.metricas` |
-| **Files / Directories** | lowercase-with-dashes or PascalCase, English only | `metric-controller.ts`, `MetricController.java` | `controlador-metricas.ts` |
-| **Database tables / columns** | snake_case, English only | `metrics`, `created_at` | `metricas`, `fecha_creacion` |
-| **API endpoints** | kebab-case, English only | `/api/metrics`, `/file-import` | `/api/metricas`, `/importar-archivo` |
-| **Environment variables** | UPPER_SNAKE_CASE, English only | `DATABASE_URL`, `API_KEY` | `URL_BASE_DE_DATOS` |
-
-**Why:** AI agents, code review tools, documentation generators, and international team members all expect English. Mixed-language identifiers break search, static analysis, and LLM context windows.
-
-**NEVER use:** Spanish, French, German, or any other language in identifiers. Comments may be bilingual if the team requires it, but code must be English-only.
-
-## Key Distinction
-
-| | This Project | Agentic Backbone (Generator) |
-|---|---|---|
-| **Purpose** | Your software application | Project scaffolding & DX framework |
-| **Location** | Your workspace | `$HOME/projects/agentic-backbone` |
-| **Language** | jooby | Bash, Python, Node.js |
-
-## Development Workflow
-
-1. **Plan:** Write PRDs in `backbone/prd/`
-2. **Implement:** Follow framework conventions in `backbone/reference/conventions/`
-3. **Test:** Use skills from `backbone/skills/` for testing patterns
-4. **Document:** Update decisions in `backbone/5-DECISIONS.md`, lessons in `backbone/6-MEMORY.md`
-5. **Commit:** Follow conventional commits (load `backbone/skills/general/git-commit/SKILL.md`)
-
-## Reference Documentation
-
-- **Conventions:** `backbone/reference/conventions/` — framework-specific syntax and patterns
-- **Hooks:** `scripts/hooks/` — pre-commit, pre-push, agent integration
-- **Skills:** `backbone/skills/` — AI agent patterns for this framework
-
-## Context7 Integration (Live Documentation)
-
-Context7 brings up-to-date, version-specific library docs into the agent's context. It's configured as an MCP server in `.claude/settings.json` — agents call `resolve-library-id` + `query-docs` natively.
-
-### Setup (One-Time, Per Developer)
-
-> **⚠️ REQUIRED: You must obtain and configure an API key, or the MCP server won't start.**
-
-```bash
-# 1. Run the setup wizard (opens browser for OAuth, generates a free key):
-npx ctx7 setup --claude
-
-# 2. Copy the key from the output, add it to your shell profile:
-echo 'export CONTEXT7_API_KEY=ctx7sk_your_key_here' >> ~/.zshrc
-source ~/.zshrc
-
-# Alternative: add to .claude/settings.local.json (stays in project scope):
-# {
-#   "mcpServers": {
-#     "context7": {
-#       "command": "npx",
-#       "args": ["-y", "@upstash/context7"],
-#       "env": { "CONTEXT7_API_KEY": "ctx7sk_your_key_here" }
-#     }
-#   }
-# }
-```
-
-**Without the key**, agents attempting `query-docs` will receive an auth error. The session continues normally — only Context7 is unavailable.
-
-## Skills
-
-Skills in `backbone/skills/` are for AI agents working on THIS project:
-- **General:** `git-commit`, `spec-driven-development`
-- **Cross-cutting:** `testing`, `security`, `docker`
-- **Framework-specific:** `java/`, `quarkus/`, `springboot/` (as applicable)
-
-**Important:** When working on this project, load framework-specific skills from `backbone/skills/jooby/`. Language-specific patterns are defined in the conventions file.
-
-*For full knowledge, see: [[knowledge/index]]*
+A Java 21 JDK is required for every Gradle command.

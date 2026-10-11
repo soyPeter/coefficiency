@@ -1,101 +1,41 @@
-<!-- VERSION: 2026.05.29 -->
-<!-- PURPOSE: Reading roadmap with reading order for developers and AI agents -->
-# 0. START HERE — Reading Roadmap
+# 0. Start Here
 
-Welcome to the backbone knowledge system. This document explains the reading order for both developers and AI agents.
+`backbone/` is the project's shared memory for people and AI agents. Agents follow `AGENTS.md`; people can read this page first.
 
-## For New Developers (Onboarding Path)
+## Map
 
-Read these documents in order to understand the project:
+| File | Owner | Purpose | Read |
+|---|---|---|---|
+| `1-PRD.md` | project | What we build, for whom, what good looks like | Onboarding, defining tasks |
+| `2-PLANNING.md` | project | Structure, modules, main flows | Onboarding |
+| `3-TASKS.md` | project | Milestones and the task index; at most one `[WIP]` | Every task |
+| `4-KNOWLEDGE.md` | project | Stack, design rules, NEVER DO list, commands | Every session |
+| `5-DECISIONS.md` | project | Index of the ADRs | Before choosing a pattern |
+| `adr/` | project | Architecture Decision Records, one per file | When specs reference them |
+| `specs/` | project | One spec per task: requirements, acceptance criteria, architecture, skills, approval | Every task |
+| `6-MEMORY.md` | project | Traps, lessons, open questions | When stuck or debugging |
+| `7-CONVENTIONS.md` | project | Code, test and commit conventions, extra DoD items | Every session |
+| `8-WORKFLOW.md` | harness | The pipeline loop and Definition of Done | Every session |
+| `9-AGENT-SKILLS.md` | project | Project skills and when to use them | When choosing skills |
+| `SKILLS.md` | harness | Skill format and routing | Writing skills or routes |
+| `HOOKS.md` | harness | Every hook and gate, and how to tune them | When a hook fires |
+| `templates/` | harness | Spec and ADR templates | Writing specs and ADRs |
+| `harness.conf` | project | Commands, test paths, gate switches | Setup |
+| `guardrails.conf` | project | Project rules that hooks enforce | Setup, new NEVER DO |
+| `routing.conf` | project | Which skills each path requires | Setup, new layers |
+| `.verdicts/` | hooks | Griller and judge verdicts per task (audit trail) | When a gate refuses |
+| `.harness-lock.json` | harness | Installed version and file hashes; do not edit | Never |
 
-1. **`1-PRD.md`** — What we're building (product requirements, feature goals)
-2. **`2-PLANNING.md`** — How it's structured (module layout, system flows, architecture style)
-3. **`4-KNOWLEDGE.md`** — Rules of the road (tech stack, design preferences, constraints)
-4. **`backbone/reference/conventions/<framework>.md`** — Framework-specific translation guide (if applicable)
-5. **`9-AGENT-SKILLS.md`** — Available AI skills, slash commands, and agents
+"harness" files are replaced by harness updates. "project" files belong to this project; the harness creates them once and never touches them again. Agents live in `../.claude/agents/` and skills in `../.claude/skills/`.
 
-**Additional context** (read after understanding the above):
-- **`5-DECISIONS.md`** — Why we chose each approach (architectural decisions log)
-- **`6-MEMORY.md`** — Hard-won lessons, traps to avoid, current status
-
-## For AI Agents (Pre-Execution Checklist)
-
-Before making any changes, agents MUST read:
-
-1. **`4-KNOWLEDGE.md`** — Understand tech stack and constraints
-2. **`backbone/reference/conventions/<framework>.md`** — Learn framework-specific mappings (if applicable)
-3. **`AGENTS.md`** — Check SDD review gates (R→D→I→V). **PRD required before design doc. Design doc required before code.**
-4. **`8-WORKFLOW.md`** — Understand agent execution requirements and Definition of Done
-5. **`3-TASKS.md`** — Identify current objective and WIP status
-6. **`9-AGENT-SKILLS.md`** — Load required skills before coding
-
-**Skill Enforcement:** Before writing code, you MUST acknowledge the relevant skill for the layer you're working in. The `pre-tool-use-skill-check.sh` hook will block until you type `acknowledge` or load the skill first.
-
-**Security Layer:** The GSD security layer is active by default. Read Guard and Injection Guard may block operations — type `acknowledge` after review to proceed.
-
-**Context7 (Live Docs):** This project has Context7 configured as an MCP server for up-to-date library documentation. To use it, obtain a free API key via `npx ctx7 setup --claude` and set `CONTEXT7_API_KEY` in your env or `.claude/settings.local.json`. Without the key, the MCP server won't start — see `4-KNOWLEDGE.md` for details.
-
-## Document Dependency Diagram
+## Dependency order
 
 ```
-1-PRD.md (WHAT we're building)
-    ↓
-2-PLANNING.md (HOW it's structured)
-    ↓
-4-KNOWLEDGE.md (tech stack + constraints)
-    ├→ 5-DECISIONS.md (WHY each choice)
-    ├→ 6-MEMORY.md (runtime learning, status)
-    ├→ backbone/reference/conventions/<framework>.md (Framework mapping)
-    │    ↓
-    └→ 8-WORKFLOW.md (HOW agents execute work)
-          ↓
-          9-AGENT-SKILLS.md (WHAT tools available)
+1-PRD (what, optional) -> specs/<id> (requirements + acceptance criteria)
+4-KNOWLEDGE + adr/ (rules and decisions) -> specs/<id> Architecture -> code and tests
+8-WORKFLOW drives the pipeline; 3-TASKS tracks it; .verdicts/ proves each gate was passed.
 ```
 
-## Key Checkpoints
+## Health check
 
-**Before writing code:**
-- ✅ Read 4-KNOWLEDGE.md (understand constraints)
-- ✅ Read backbone/reference/conventions/<framework>.md (verify syntax if applicable)
-- ✅ Read 8-WORKFLOW.md (understand DoD)
-- ✅ Check 3-TASKS.md (identify current work)
-- ✅ **SDD Gates satisfied:** PRD exists → Design doc exists → REQ- IDs in code
-- ✅ **Acknowledge required skills** (pre-tool-use-skill-check.sh will block until acknowledged)
-
-**Before committing:**
-- ✅ Code adheres to architectural boundaries (4-KNOWLEDGE.md)
-- ✅ Tests written according to project standards (8-WORKFLOW.md)
-- ✅ Required coverage targets met (8-WORKFLOW.md)
-- ✅ Traceability matrix updated (`./scripts/verify-traceability.sh` passes)
-- ✅ Hooks validate conventions automatically (if configured)
-- ✅ Security: no secrets, no injection patterns (pre-commit + injection guard)
-- ✅ Update 5-DECISIONS.md, 6-MEMORY.md, 3-TASKS.md with findings
-- ✅ Commit using project's commit format (hooks may enforce this)
-
-## Common Questions
-
-**Q: I'm new. Where do I start?**
-A: Read 1-PRD → 2-PLANNING → 4-KNOWLEDGE. Takes 15-30 minutes.
-
-**Q: I'm an AI agent. What should I load?**
-A: Load 4-KNOWLEDGE first, then backbone/reference/conventions/<framework>.md if applicable, then check 3-TASKS for your work. Read 8-WORKFLOW for DoD requirements.
-
-**Q: I'm an AI agent. 3-TASKS.md shows M1: Project Bootstrap as [WIP]. What do I do?**
-A: **Start bootstrapping immediately.** For new projects, M1 is pre-marked [WIP]. Do not ask the user for permission. Begin with:
-1. Read `backbone/reference/conventions/<framework>.md` to understand framework patterns
-2. Verify the build tool is configured (e.g., `build.gradle.kts` for Gradle)
-3. Set up the source directory structure per the conventions
-4. Create a minimal working build
-5. Mark M1 tasks as [x] in 3-TASKS.md as you complete them
-
-**Q: Why so many documents?**
-A: These docs encode project decisions so agents don't repeat work and maintain consistency.
-
-## Releases
-
-Release notes live in `backbone/releases/`. See `/CHANGELOG.md` for the full changelog.
-
----
-
-*For the file-level document listing, see each root file above — they serve as their own indexes.
-Subdirectory `index.md` files are intentionally omitted to avoid duplication.*
+Run `scripts/harness/doctor.sh` to check hooks, agents, routes and configuration. Run `python3 scripts/harness/lib/harness.py spec-check <task-id>` to see a spec's readiness.

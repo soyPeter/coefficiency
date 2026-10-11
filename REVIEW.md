@@ -1,6 +1,6 @@
 # Code Review — coefficiency (services/coeff)
 
-**Date:** 2026-05-18 | **Depth:** STANDARD | **Reviewer:** backbone-code-reviewer
+**Date:** 2026-05-18 | **Depth:** STANDARD | **Reviewer:** AI code review
 
 ---
 
@@ -282,4 +282,4 @@ No test files were found in `src/test/java/`, `src/intTest/java/`, or `frontend/
 
 ---
 
-*Review powered by backbone-code-reviewer agent. See `backbone/4-KNOWLEDGE.md` for architecture rules referenced in this review.*
+*See `backbone/4-KNOWLEDGE.md` and `backbone/2-PLANNING.md` for the architecture rules referenced in this review. Open items are tracked in `backbone/3-TASKS.md` (M6).*

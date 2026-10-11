@@ -1,394 +1,96 @@
-<!-- VERSION: 2026.06.22#Addunattendedloopmodeto/backbone:taskwith--loop/--goalflags+maker/checkersplit(CHNG-041) -->
-
-> **⚠️ TEMPLATE FILE — For Generated Projects**
-> This file is a **template** that gets copied into new projects when you run `init-project.sh`. It is NOT the bootstrap for the agentic-backbone generator itself.
->
-> **For the generator's own agent bootstrap:** See [`backbone/AGENTS.md`](backbone/AGENTS.md) instead.
->
-> **For generated projects:** This file becomes your project's `AGENTS.md` and is the entry point for AI agents working on that project.
-
-# AI Agent Bootstrap
-
-> This project was initialized using the **Agentic Backbone** generator.
-> Backbone version: 2026.06.22#Addunattendedloopmodeto/backbone:taskwith--loop/--goalflags+maker/checkersplit(CHNG-041)
-
-## Right Now — 30 Second Start
-
-1. **Read this file** (you're doing it)
-2. **Read [[[`backbone/4-KNOWLEDGE.md`](backbone/4-KNOWLEDGE.md)](backbone/4-KNOWLEDGE.md)](backbone/4-KNOWLEDGE.md)** — tech stack, constraints, build commands
-3. **Read [[[`backbone/8-WORKFLOW.md`](backbone/8-WORKFLOW.md)](backbone/8-WORKFLOW.md)](backbone/8-WORKFLOW.md)** — Definition of Done, commit rules, test reqs
-4. **Read [[[[[`backbone/3-TASKS.md`](backbone/3-TASKS.md)](backbone/3-TASKS.md)](backbone/3-TASKS.md)](backbone/3-TASKS.md)](backbone/3-TASKS.md)** — see what's [WIP] and what to work on
-5. **Read [[[`backbone/9-AGENT-SKILLS.md`](backbone/9-AGENT-SKILLS.md)](backbone/9-AGENT-SKILLS.md)](backbone/9-AGENT-SKILLS.md)** — available commands, agents, subagent orchestration
-6. **Worktree decision** — if `.backbone/session/worktree` exists, `cd` into that path. Otherwise, decide:
-
-   | Worktree? | When | Examples |
-   |-----------|------|----------|
-   | **Mandatory** | Feature work with `[WIP]` tasks, Level 1 changes (domain model, API contracts, shared libs) | New service, schema migration, refactoring a shared library |
-   | **Recommended** | Multi-session tasks, changes touching 5+ files, high-risk refactors | Major refactor, cross-cutting changes |
-   | **Optional** | Single-session quick fixes, docs, chore, exploratory spikes | Fix a typo, update a template, bump a version |
-
-   Create with `./scripts/worktrunk.sh create feat/<name>` (requires `.worktrunk.toml`) or `git worktree add -b <branch> ../<project>-<feature> <base-branch>`. **Agents must proactively recommend worktrees for Level 1 changes — don't wait to be asked.**
-7. **Load a skill** before coding (see Skill Lookup below)
-8. **Type `acknowledge`** when the hook asks — or it blocks Write/Edit
-
-## Specification-Driven Development (SDD)
-
-This project uses blocking review gates. You **cannot skip** these steps:
-
-| Gate | What You Need | Before You Can |
-|------|---------------|----------------|
-| **G → P** | Grill with `grill-me` skill, add `grilled: true` to proposal | Write a proposal |
-| **R → D** | proposal.md in `backbone/artifacts/changes/CHNG-XXX/` with EARS requirements | Write a design doc |
-| **D → I** | design.md in `backbone/artifacts/changes/CHNG-XXX/` | Write implementation code |
-| **P → T** | tasks.md in `backbone/artifacts/changes/CHNG-XXX/` with task breakdown | Mark tasks [WIP] in `3-TASKS.md` |
-| **I → V** | Traceability matrix in `backbone/artifacts/traceability/` | Mark task complete / commit |
-
-**Exemptions:** `fix`, `docs`, `refactor`, `chore`, `test` tasks skip grilling, design doc, and planning doc requirements.
-
-**How to start a feature:**
-1. Run `./scripts/backbone-change-init.sh <feature-name>` to scaffold a change folder
-2. Write `backbone/artifacts/changes/CHNG-XXX/proposal.md` with EARS requirements
-3. Write `backbone/artifacts/changes/CHNG-XXX/design.md` with architecture and decisions
-4. Write `backbone/artifacts/changes/CHNG-XXX/tasks.md` with task breakdown
-5. Implement with REQ- IDs in code comments
-6. Run `./scripts/extract-traceability.sh` to auto-build traceability
-7. Run `/backbone:review` (Claude) or `./scripts/secret-scan.sh --staged && ./scripts/verify-traceability.sh` (OpenCode) to run the full verification suite before committing
-
-### Command Equivalents: Claude Code vs OpenCode
-
-| Task | Claude Code | OpenCode |
-|------|-------------|----------|
-| Design feature | `/backbone:design <name>` | `./scripts/backbone-change-init.sh <name>`, then write proposal/design/tasks in change folder |
-| Design lightweight | `/backbone:design --plan <name>` | `./scripts/backbone-change-init.sh <name>`, then write proposal + tasks |
-| Amend existing | `/backbone:design --amend CHNG-XXX` | Create new CHNG-NNN with `parent: CHNG-XXX`, write delta docs |
-| Execute task | `/backbone:task` | Find [WIP] task in `3-TASKS.md`, implement, trace REQ-IDs |
-| Quick task | `/backbone:task --quick` | Directly edit, then `git commit` |
-| Loop task | `/backbone:task --loop 30m --goal "tests pass"` | Unattended automation — runs on cadence until goal met, checked by separate verifier |
-| Review | `/backbone:review` | `./scripts/secret-scan.sh --staged && ./scripts/verify-traceability.sh` |
-| Code review | `/backbone:review --depth deep` | Preflight gate (build+lint+test), signal-based specialist subagents, aggregated findings with severity triage |
-| Health check | `/backbone:review --depth quick` | `git status`, run tests, check build |
-| Deep audit | `/backbone:deep-review` or `/backbone:review --depth full-audit` | Read command definition, spawn 4 parallel subagents |
-| Arch depth | `/backbone:map --deep-arch` | Spawn subagent for module thickness/layer violations/DDD/SOLID |
-| Close feature | `/backbone:close` | Audit REQ-IDs in traceability, mark tasks [x] in `3-TASKS.md` |
-| Ship release | `/backbone:close --ship` | Version bump, tag, changelog, push |
-| Status | `/backbone:status` | Read `backbone/3-TASKS.md` |
-| Decision | `/backbone:decide` | Append entry to [[`backbone/5-DECISIONS.md`](backbone/5-DECISIONS.md)](backbone/5-DECISIONS.md) |
-| Architecture map | `/backbone:map` | Read source tree, generate structural map (sections: system context, subdomain map with deps, layer table, port/adapter mapping, deployment view, patterns) |
-| QMS (register NCR) | `/backbone:qms` | `./scripts/qms-register-issue.sh --title "..." --severity major --category code` |
-| QMS (compact) | `/backbone:qms --compact` | Scan `5-DECISIONS.md` + `6-MEMORY.md` for stale entries manually |
-| Push clean | `/backbone:push-clean` | `./scripts/push-clean.sh [--remote URL] [--branch main]` |
-| Debug | `/backbone:debug` | Manual: observe → hypothesize → experiment → validate |
-| Cost track | `/backbone:cost` | Manual: estimate tokens and append to [[[[`backbone/SESSION.md`](backbone/SESSION.md)](backbone/SESSION.md)](backbone/SESSION.md)](backbone/SESSION.md) |
-| Sync skills | `/backbone:sync` | Copy from generator's `templates/backbone/skills/` |
-| Help | `/backbone:help` | Read `backbone/9-AGENT-SKILLS.md` |
-
-**Pre-commit hooks and plugins work identically for both agents.** The `.opencode/plugins/` directory contains the same checks (WIP, skill, conventions, grill, traceability, QMS) that the `.claude/hooks/` enforce.
-
-**Blocked?** See `backbone/8-WORKFLOW.md` → "Review Gates (Blocking)" for full details.
-
-## Reading Checklist (Mandatory)
-
-| # | File | Why | When |
-|---|------|-----|------|
-| 1 | `AGENTS.md` (this file) | Bootstrap guide | Every session |
-| 2 | `backbone/4-KNOWLEDGE.md` | Tech stack, NEVER DO list, build commands | Every session |
-| 3 | `backbone/8-WORKFLOW.md` | Definition of Done, commit rules, test reqs | Every session |
-| 4 | `backbone/3-TASKS.md` | Current WIP tasks, what to work on right now | Every session |
-| 5 | `backbone/9-AGENT-SKILLS.md` | Commands, agents, subagent orchestration | Every session |
-| 6 | `backbone/reference/conventions/Java.md` | Framework-specific syntax mapping | If working on code |
-
-*After reading once, trust session memory. Don't re-read unless you need a specific detail.*
-
-## Skill Lookup — Load Before Coding
+# Agent Instructions
 
-**Framework-specific:**
-- Java skills → `~/.backbone/skills/Java/` (or `backbone/skills/Java/` if standalone)
-- Testing → `~/.backbone/skills/cross-cutting/testing/test-quality/SKILL.md`
+This repository uses the **agentic harness**. Project knowledge lives in `backbone/`, role agents in `.claude/agents/`, skills in `.claude/skills/`, and hooks in `scripts/harness/` enforce the process. These rules apply to every AI coding agent working here.
 
-**Always available:**
-- Any code → `~/.backbone/skills/general/coding-standards/SKILL.md`
-- Git commits → `~/.backbone/skills/general/git-commit/SKILL.md`
-- Spec/PRD work → `~/.backbone/skills/general/spec-driven-development/SKILL.md`
+> Harness-owned file: harness updates replace it. Put project rules in `backbone/4-KNOWLEDGE.md` and `backbone/7-CONVENTIONS.md`, not here.
 
-**Skill safety:** Verify first line says `<!-- FRAMEWORK: ... -->`. If missing, ask the user.
+## 1. First-run setup
 
-**How to load (centralized-first):** For each skill in `required-skills` frontmatter:
-1. Check if `~/.backbone/skills/<path>/SKILL.md` exists → `view ~/.backbone/skills/<path>/SKILL.md`
-2. Check if `backbone/skills/<path>/SKILL.md` exists → `view backbone/skills/<path>/SKILL.md`
-3. If not found → use `skill tool "<basename>"` as fallback
+If the session-start note says **SETUP INCOMPLETE**, `backbone/` still has `FILL` placeholders. Before any other work, interview the user one topic at a time, then:
 
-### Cross-Agent Skill Enforcement (S→C)
+1. Fill in:
+   - `1-PRD.md`: what is being built, for whom, and what good looks like. Optional but recommended.
+   - `2-PLANNING.md`: structure, modules and main flows.
+   - `4-KNOWLEDGE.md`: stack, design rules, NEVER DO list and commands.
+   - `7-CONVENTIONS.md`: code, testing and commit conventions.
+2. Agree `HARNESS_BUILD_CMD`, `HARNESS_TEST_CMD` and `HARNESS_TEST_PATHS` in `backbone/harness.conf`.
+3. **Decide the stack in design.** The harness assumes no language, framework or tool.
+   - Have the `architect` agent write `ADR-002` for the architecture style and the stack: languages, frameworks, build tool, test stack, persistence, packaging, and what is forbidden. It should consult `python3 scripts/harness/lib/harness.py catalog` and name every catalog pack and option the decision implies.
+   - The user reviews the ADR and sets its status to `Accepted`. Every spec will reference it.
+4. **Adopt the matching stack packs** from the accepted ADR: `python3 scripts/harness/lib/harness.py adopt <pack> --adr ADR-002 --with <options> --without <options>`. Every option of a pack must be decided, since the ADR is the source of the choice.
+   - Adoption installs the pack's skills and adds its routes and guardrails to `backbone/routing.conf` and `backbone/guardrails.conf`, in blocks that cite the ADR.
+   - It also sets the related commands in `harness.conf`.
+   - For anything the catalog doesn't cover, create project skills (format in `backbone/SKILLS.md`) and route them yourself.
+   - When a later ADR changes the stack, re-adopt or remove packs (`adopt --remove <pack>`).
+5. Turn each remaining NEVER DO item that a regex can detect into a rule in `backbone/guardrails.conf`.
+6. Agree the first milestone with the user, write it in `3-TASKS.md`, and commit.
 
-The skill gate is enforced at **pre-commit time** for ALL agents (Claude Code, OpenCode, Cursor, etc.).
+Setup configures the harness only. Do not scaffold or generate application code unless the user asks for it as a task.
 
-**How to acknowledge:**
+## 2. Before each task
 
-Option 1 — Session file:
-```bash
-mkdir -p .backbone/session
-echo '{"java/java-core": true}' > .backbone/session/skills.json
-git add .backbone/session/skills.json
-```
+Read `backbone/4-KNOWLEDGE.md`, `backbone/7-CONVENTIONS.md`, `backbone/8-WORKFLOW.md` and `backbone/3-TASKS.md`, once per session. Check the ADR index in `5-DECISIONS.md` and the traps in `6-MEMORY.md` before guessing at a pattern.
 
-Option 2 — Commit message:
-```bash
-git commit -m "feat(auth): add OAuth login" -m "Skills: java-core"
-```
+## 3. The pipeline
 
-**Mechanical enforcement:**
-- `pre-tool-use-skill-check.sh` blocks Write/Edit without acknowledgment (Claude Code)
-- `pre-commit-skill-check.sh` blocks commits without acknowledgment (all agents)
-- Pre-commit Gate 14 validates staged files
-- Override: `export SKIP_SKILL_CHECK=1`
+Every task goes through four phases. You, the main session, are the **orchestrator**: you run the agents, relay questions to the user, and keep `3-TASKS.md` current. You don't write specs, ADRs or code yourself. `8-WORKFLOW.md` has the step-by-step loop.
 
-## Task Granularity Enforcement (Planning → Tasks)
+| Phase | Agent | Produces | Gate (enforced by hooks) |
+|---|---|---|---|
+| 1. Define | `analyst` | `backbone/specs/<id>.md`: requirements (REQ), Given/When/Then acceptance criteria (AC), NFRs | — |
+| | `architect` | ADRs in `backbone/adr/`; the spec's Architecture and Skills sections | — |
+| | `griller` | Questions and a verdict on the spec and ADRs | **Start gate:** a task can only become `[WIP]` with a valid spec, a griller **pass** on its current text and ADRs, and the **user's** `Approved-by:` line |
+| 2. Build | `implementer` | Code and tests; tests mention the AC ids they prove | **Skill gate:** a file can't be edited until every skill routed to it (and every skill in the spec) has been loaded in that session |
+| 3. Judge | `judge` | A verdict on requirements, ACs and tests | **Judge gate:** a task can only become `[x]` with a judge **pass** on the current code, every AC traced to a test |
+| 4. Record | `scribe` | `6-MEMORY.md` entries; ADRs for emergent decisions | — |
 
-Before marking a task as [WIP] in `3-TASKS.md`, you MUST decompose work into small, concrete units:
+**Grilling** means you take the griller's questions to the user verbatim, get answers, have the analyst or architect revise, and grill again until it passes. Then ask the user to review the spec and add their approval line. Only the user can approve; agents' edits to `Approved-by:` lines are refused, and an approved spec is frozen.
 
-1. **Load the skill**: `view ~/.backbone/skills/general/planning-and-task-breakdown/SKILL.md` (or `view backbone/skills/general/planning-and-task-breakdown/SKILL.md` if standalone)
-2. **Edit tasks.md** in `backbone/artifacts/changes/CHNG-XXX/` with vertical slice breakdown
-3. **Write granular tasks**: each task does ONE thing with a size tag [XS/S/M/L]
+## 4. Task protocol
 
-**Task syntax rules:**
-- Size tag REQUIRED: `[XS]`, `[S]`, `[M]`, or `[L]` (XL forbidden)
-- Minimum 5 words describing WHAT + WHERE
-- Concrete verbs only: add, fix, remove, configure, validate, create, update, extract, refactor
-- NO vague verbs: implement, build, develop, do, make, setup
-- NO scope bloat: and, all, entire, everything, system, module, feature, epic
-- ONE thing per task; title containing "and" signals two tasks
+- Tasks in `3-TASKS.md` are list lines: `- [ ] **Task <id>: <title>** (spec: backbone/specs/<id>.md)`. `[WIP]` goes on task lines only.
+- Only one task may be `[WIP]`. If another is already in progress, ask the user (in autonomous mode, resume it or escalate; section 7).
+- After `HARNESS_JUDGE_MAX_ROUNDS` judge fails, stop retrying and take the findings to the user.
+- To abandon a task, change its line back to `- [ ]` without rewording it.
+- A task is finished only when the Definition of Done in `8-WORKFLOW.md` is met, including the commit.
 
-**Mechanical enforcement:**
-- `pre-tool-use-task-granularity-check.sh` blocks [WIP] tasks that fail syntax rules
-- Pre-commit Gate 12 validates staged 3-TASKS.md changes
-- Override: `export CLAUDE_CODE_SKIP_GRANULARITY=1`
+## 5. Guardrails
 
-**Exemptions:** fix, bug, docs, refactor, chore, test, perf, ci, build, style tasks skip planning doc and size requirements.
+- Hooks block destructive commands, secrets, `backbone/guardrails.conf` violations, a second `[WIP]`, and every gate above. When something is blocked, fix the cause.
+- Never work around a hook. Don't use `--no-verify`, don't write files through the shell to avoid checks, and don't edit `backbone/.verdicts/`, `Approved-by:` lines, ADR acceptance or the user-only `harness.conf` settings. The hooks refuse these, and the pre-commit `verify` and CI re-check the resulting state.
+- Each agent may write only its own files, and the main session only `backbone/` docs and configuration, `.claude/skills/` and `CLAUDE.md`. The hooks enforce this, so hand work to the right agent instead.
+- If the user really wants a blocked command, ask them to run it themselves (in Claude Code: `! <command>`).
+- `backbone/HOOKS.md` describes every hook and gate.
 
-## Core Guardrails
+## 6. Skills
 
-- **Follow conventions** from `backbone/4-KNOWLEDGE.md` and framework conventions file
-- **Respect boundaries** — don't leak framework imports into domain layer
-- **Load skills first** — the `pre-tool-use-skill-check.sh` hook blocks Write/Edit until acknowledged
-- **Cross-agent enforcement** — pre-commit Gate 14 blocks commits without skill acknowledgment (works with Claude Code, OpenCode, Cursor, etc.)
-- **Never ignore hooks** — if a hook warns, fix it before proceeding
+Skills live in `.claude/skills/<name>/SKILL.md`:
 
-## Safe-Change Guardrails
+- **Core skills:** `requirements-writing`, `adr-writing`, `architecture`, `api-design`, `openapi`, `code-quality`, `module-testing`, `security` and `changelog` (at release time).
+- **Stack skills:** come from catalog packs adopted after the stack ADR. Session start lists the adopted packs.
+- **Project skills:** anything else the project needs. List them in `backbone/9-AGENT-SKILLS.md`.
 
-Some changes are technically easy but operationally expensive. **Flag before acting.**
+Routing decides which skills each path needs: `scripts/harness/routing.core.conf` and `backbone/routing.conf`, which includes the adopted packs' blocks. Each skill's **Linked skills** section says which skill to use next. Before relying on a skill, check its `applies-to` field against the stack in `4-KNOWLEDGE.md`. If it conflicts, ask the user.
 
-| Change | Rule |
-|--------|------|
-| Domain model changes | Changing entities, tables, or API contracts affects all layers. Discuss before modifying. |
-| Framework version bumps | Upgrading Java or build tools can break the build. Test thoroughly. |
-| Test pipeline changes | Modifying test configuration or removing tests reduces safety. Run the full suite first. |
-| Shared libraries | Changes to `services/libs/shared-*` affect all services. Coordinate with service owners. |
-| `4-KNOWLEDGE.md` / `8-WORKFLOW.md` | These are project conventions. Discuss major changes with the team. |
+## 7. Autonomous mode
 
-**If unsure whether a change is safe, treat it as unsafe — mention it to the user before editing.**
+When the user sets `HARNESS_AUTONOMY="autonomous"` (user-only), no human answers in the loop, and the session-start note says **AUTONOMOUS MODE**. Every "ask the user" above is replaced:
 
-## Behavioral Guardrails (Backbone Principles)
+| Supervised | Autonomous |
+|---|---|
+| Relay the griller's questions to the user | Have the analyst or architect answer them from `backbone/` (PRD, knowledge, conventions, ADRs, memory), recording each answer under the spec's **Assumptions** with its source. A question `backbone/` can't answer is escalated. `approve` refuses a spec whose griller asked questions while Assumptions is empty. |
+| The user adds `Approved-by:` | `python3 scripts/harness/lib/harness.py approve <id>`. The harness approves a valid, grilled spec only if it is low-risk; otherwise it escalates the task itself. |
+| The user accepts an ADR | A task on a Proposed ADR is escalated by `approve`; tasks on accepted ADRs go on. |
+| Judge fails `HARNESS_JUDGE_MAX_ROUNDS` times: ask the user | The judge's recorder escalates automatically; so does the griller's after `HARNESS_GRILL_MAX_ROUNDS` fails. |
+| Another task is `[WIP]`, or a command is blocked: ask the user | Escalate: `python3 scripts/harness/lib/harness.py escalate <id> --reason "<what and why>" --needed "<the decision>"` |
 
-Derived from [Andrej Karpathy's observations](https://github.com/forrestchang/andrej-karpathy-skills) on LLM coding pitfalls. These principles bias toward **caution over speed**.
+An escalation parks the task: it leaves `[WIP]` with a `BLOCKED:` note and gets an entry in `backbone/escalations.md` (and a GitHub issue when `HARNESS_ESCALATE_GH="on"`). Then **continue with the next ready task**. Never wait for an answer, and never clear a `BLOCKED` note. Only the user does that, after resolving the entry.
 
-### 1. Think Before Coding
+**Risk.** A spec is low-risk unless it mentions a `HARNESS_RISK_TERMS` term (authentication, secrets, payments, personal data, migrations, breaking or public API changes, ...), names a `HARNESS_RISK_PATHS` path, or references an ADR that isn't Accepted. A policy approval records the base commit. If the change later touches a sensitive path or more than `HARNESS_RISK_MAX_FILES` files, the judge gate refuses to finish the task until it is escalated. Check with `harness.py risk <id>`.
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+**Runner.** The user or a scheduled job may drive tasks with `harness.py run`: one fresh session per task, with the prompt saying which task. Work only on that task, and end the session when it is `[x]` and committed, or BLOCKED. Never start the runner yourself.
 
-Before implementing:
-- **State assumptions explicitly** — If uncertain, ask rather than guess.
-- **Present multiple interpretations** — Don't pick silently when ambiguity exists.
-- **Push back when warranted** — If a simpler approach exists, say so.
-- **Stop when confused** — Name what's unclear and ask for clarification.
+**Out-of-band changes.** Change protected files (`backbone/`, `scripts/harness/`, `.claude/`) only with the Write and Edit tools. A protected file that changes any other way, for example from a script, is detected after the command, and the task is escalated for review.
 
-### 2. Simplicity First
+**Kill switch.** While `.git/harness/STOP` exists, every tool call is refused and the Stop hook lets the session end. Report your state and stop. Only the user creates or removes the file.
 
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-**The test:** Would a senior engineer say this is overcomplicated? If yes, simplify.
-
-### 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it — don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that **YOUR** changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-**The test:** Every changed line should trace directly to the user's request.
-
-### 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
-### 5. The AI Cascade Effect (John Macias)
-
-Derived from [The Three Layers Before Claude Code](https://thebrokentelephone.com/articles/three-layers-before-claude-code/). Errors at the **foundation level** compound exponentially across all subsequent AI prompts.
-
-**The Hierarchy of Technical Impact:**
-
-| Level | What | Visibility | Cost of Error |
-|-------|------|------------|---------------|
-| 1 — Foundation | Entities, business logic, integration contracts | Low | **Critical** |
-| 2 — Behavior | Flows, states, edge cases | Medium | Medium |
-| 3 — Aesthetics | Colors, copy, spacing | High | Low |
-
-**What this means:**
-- A wrong data model (Level 1) poisons every query, every test, every prompt that references it. The cost isn't the initial mistake — it's the 20 follow-up prompts explaining why the fix for the fix needs another fix.
-- An ambiguous API contract (Level 1) means the client and service are built on different assumptions. Both look correct in isolation. Neither works together.
-- A wrong hex color (Level 3) is a one-line change.
-
-**The rule:**
-- Before generating code, verify the foundation is solid. If the spec is ambiguous about entities or contracts, **stop and clarify** — don't generate 400 lines of confident code on a shaky foundation.
-- When refactoring, change Level 1 first, then Level 2, then Level 3. Never the reverse.
-- **Level 1 changes require a worktree.** Foundation errors on `dev`/`main` contaminate the entire branch. Agents must proactively flag this — don't continue without isolation.
-
-## Subagent Workflow (Parallel Task Execution)
-
-The backbone supports spawning specialized subagents for parallel task execution. This keeps the main agent's context clean while independent tasks run in isolation.
-
-### Available Subagents
-
-| Subagent | Fork | Purpose | When to Use |
-|----------|------|---------|-------------|
-| `backbone-explorer` | fresh (0) | Search codebase, find files/patterns | Need to locate something without reading entire files |
-| `backbone-planner` | inherit (1) | Create implementation plans from PRDs | Breaking down a complex task before coding |
-| `backbone-implementer` | inherit (1) | Implement ONE specific sub-task | Executing a single task from 3-TASKS.md |
-| `backbone-reviewer` | inherit (1) | Review plans and code for quality, security, architecture, tests | Before implementation (plan validation) and before commit (code review) |
-| `backbone-verifier` | inherit (1) | Run automated gates + adversarial audit | After implementation, before committing |
-
-### Orchestration Pattern
-
-```
-Main Agent
-  ├── backbone-explorer → "find all TODOs in src/"
-  ├── backbone-planner → "plan fix for auth bug"
-  └── backbone-reviewer → "validate plan: consistent, complete, testable?"
-       └── backbone-implementer → "implement fix for auth bug"
-            └── backbone-verifier → "verify auth fix + run gates"
-            └── backbone-reviewer → "review implementation"
-```
-
-### Handoff Contracts (Structured Output)
-
-Each agent must return output in a predictable structure. The parent agent validates the contract before spawning the next agent.
-
-| From | To | Contract | Format |
-|------|-----|----------|--------|
-| `backbone-explorer` | Main Agent | `{files: [{path, line, context}]}` | Markdown list |
-| `backbone-planner` | `backbone-reviewer` | Plan with Skills, Files, Tests, Verification | Markdown sections |
-| `backbone-reviewer` | Main Agent | `{verdict: "APPROVE" \| "REQUEST_CHANGES", issues: []}` | Markdown table |
-| `backbone-implementer` | `backbone-verifier` | `{files_modified: [], files_created: [], test_results: {}, issues: []}` | Markdown sections |
-| `backbone-verifier` | Main Agent | `{gates: [{name, status, details}], overall: "PASS" \| "FAIL"}` | Markdown table |
-
-### Rules
-- **Spec before implementation** — planner output must be validated by backbone-reviewer before implementer starts
-- **Subagents don't commit** — return changes to main agent for final commit
-- **Subagents skip skill acknowledgment** — main agent acknowledges once, subagents inherit
-- **Explorer starts fresh** — no inherited context, just search capabilities
-- **Planner/Implementer inherit** — must know backbone conventions from 4-KNOWLEDGE.md
-- **Sequential for conflicts** — if two implementers touch the same file, run sequentially
-- **Batch validation** — run backbone-verifier once after all implementers finish
-
-### File Conflict Enforcement (Mechanical)
-
-The `pre-tool-use-subagent-conflict-check.sh` hook enforces the "Sequential for conflicts" rule automatically. It blocks `Task` spawns when declared files overlap with a running subagent.
-
-**Convention:** Subagents that write files MUST declare targets in the first line of the prompt:
-
-```
-FILES: [src/auth.ts, src/user.ts]
-
-You are backbone-implementer...
-```
-
-- `FILES:` must be on its own line at the start of the prompt
-- Format: bracket list with comma-separated paths
-- No `FILES:` declaration = conflicts not detectable = allowed silently
-- Registry auto-expires entries after 15 minutes
-- Override: `export CLAUDE_CODE_SKIP_SUBAGENT_CONFLICT_CHECK=1`
-
-### How to Spawn
-
-```
-Use the Task tool with subagent_type matching the agent name.
-Provide a complete, self-contained prompt — subagents don't see your context.
-```
-
-## Live Documentation (Mandatory)
-
-1. **Before starting:** Mark task `[WIP]` in `backbone/3-TASKS.md`
-2. **After completing:** Mark `[x]` in `backbone/3-TASKS.md`
-3. **Decisions:** Add to `backbone/5-DECISIONS.md`
-4. **Lessons learned:** Add to [`backbone/6-MEMORY.md`](backbone/6-MEMORY.md)
-5. **Commits:** Use conventional format `type(scope): description` (load git-commit skill)
-
-## Commit Format
-
-```
-feat(portal): add user authentication
-fix(hooks): resolve NPE in health check endpoint
-docs(backbone): update 3-TASKS.md with M3 progress
-```
-
-Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`
-
-## Session State
-
-`backbone/SESSION.md` is auto-generated on session start. It tracks:
-- Files you've read this session
-- Skills you've acknowledged
-- WIP tasks
-- Completed tasks (synced to `3-TASKS.md` on commit)
-
-## Token Efficiency & Cost Awareness
-
-- **Read once, trust memory** — don't re-read `4-KNOWLEDGE.md` every message
-- **Targeted edits** — use Edit tool, never rewrite entire files
-- **15-minute chunks** — break tasks into small sub-tasks in `3-TASKS.md`
-- **Batch operations** — process multiple files/skills together
-- **Log costs per task** — after significant work, call `/backbone:cost` to record token proxies and estimated spend in `backbone/SESSION.md`
-
-### Cost Tracking Command
-
-Use `/backbone:cost` to log a heuristic cost estimate. It's not exact (Claude Code doesn't expose token counts), but it builds awareness:
-
-```
-Heuristic formula:
-  base_tokens  = 15_000 × subagent_spawns
-  file_tokens  = 500 × files_read
-  tool_tokens  = 2_000 × tool_calls
-  input_tokens ≈ base + file + tool
-  output_tokens ≈ input × 0.25
-  cost_usd     = (input/1M × $3) + (output/1M × $15)  # Sonnet 4.6
-```
-
-A typical multi-agent task with 3 subagents, 20 file reads, and 15 tool calls ≈ **$0.20-0.30**.
-The command appends an entry to `backbone/SESSION.md` and updates a running session total.
-
-> ⚠️ **Flag threshold:** If session total exceeds $5.00, the command warns you to review whether all subagent spawns were necessary.
