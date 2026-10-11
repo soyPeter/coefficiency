@@ -69,7 +69,7 @@
     ".devcontainer/harness-agent/devcontainer.json": "3d7bdfdfe4648abbd33c84f5ed72bf1a345336a5f4596c4f32e5b532ea6fa5b3",
     ".devcontainer/harness-agent/init-firewall.sh": "19e692cb0093681d99bf422db3014eb1b8b29b70eae753ce493d08a145412842",
     ".devcontainer/harness-agent/trust-workspace.py": "e88c11a3ba56831072d20b21f96c02fcfa2cb8de6fdf102bad773a102f4c6bfe",
-    ".github/workflows/harness-verify.yml": "4006c1862158102780a3258fe50d58272d8738d5a61757b5d0605b1d220a3bbd",
+    ".github/workflows/harness-verify.yml": "ec639efba76f2086c269f82b42357c75bdd74b4d078ed37a231589ad1b0c06f0",
     "AGENTS.md": "68ed404312af461a02f0980973aca9b3a09be868b5496a5eb7e16733919df87a",
     "backbone/0-START-HERE.md": "d15ee782343083c8e1ca7a47ae49ef258c1c5576a0687f744894b271267be3e2",
     "backbone/8-WORKFLOW.md": "e250ab995311667f701bcdca9e8a1c89bcf1d988749924b782a2f053556ae8da",
@@ -130,7 +130,7 @@
     "scripts/harness/lib/harness.py": "10b5ce539451492e4ca04fbbb5983e88fce35e5fd2a62b6b0e69195c837dca41",
     "scripts/harness/routing.core.conf": "e590cf46c5bce825f0a0b44dc28f92ac42772a4801c1a782a6e31b7e1a487e07"
   },
-  "harness_version": "0.8.0",
+  "harness_version": "0.8.1",
   "installed": "2026-10-05",
-  "updated": "2026-10-10"
+  "updated": "2026-10-11"
 }
